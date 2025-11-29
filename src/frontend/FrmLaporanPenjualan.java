@@ -19,6 +19,7 @@ public class FrmLaporanPenjualan extends javax.swing.JFrame {
      */
     public FrmLaporanPenjualan() {
         initComponents();
+        setTitle("Laporan Penjualan Cafe");
     }
 
     /**
