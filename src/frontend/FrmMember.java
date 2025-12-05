@@ -16,15 +16,13 @@ public class FrmMember extends JFrame {
     private static final String LABEL_ID_MEMBER = "ID Member";
     private static final String LABEL_NAMA_MEMBER = "Nama Member";
     private static final String LABEL_NO_TELP = "No. Telepon";
-    private static final String LABEL_EMAIL = "Email";
     private static final String LABEL_POINTS = "Points";
     private static final String LABEL_TANGGAL_JOIN = "Tanggal Join";
-    private static final String[] COLUMN_NAMES = {"ID", LABEL_NAMA_MEMBER, LABEL_NO_TELP, LABEL_EMAIL, LABEL_POINTS, LABEL_TANGGAL_JOIN};
+    private static final String[] COLUMN_NAMES = {"ID", LABEL_NAMA_MEMBER, LABEL_NO_TELP, LABEL_POINTS, LABEL_TANGGAL_JOIN};
 
     private JTextField txtIdMember;
     private JTextField txtNamaMember;
     private JTextField txtNoTelp;
-    private JTextField txtEmail;
     private JTextField txtCari;
     private JSpinner spnPoints;
     private JTextField txtTanggalJoin;
@@ -46,14 +44,12 @@ public class FrmMember extends JFrame {
         JLabel lblId = new JLabel(LABEL_ID_MEMBER);
         JLabel lblNama = new JLabel(LABEL_NAMA_MEMBER);
         JLabel lblNoTelp = new JLabel(LABEL_NO_TELP);
-        JLabel lblEmail = new JLabel(LABEL_EMAIL);
         JLabel lblPoints = new JLabel(LABEL_POINTS);
         JLabel lblTanggalJoin = new JLabel(LABEL_TANGGAL_JOIN);
 
         txtIdMember = new JTextField();
         txtNamaMember = new JTextField();
         txtNoTelp = new JTextField();
-        txtEmail = new JTextField();
         spnPoints = new JSpinner(new SpinnerNumberModel(0, 0, 100000, 1));
         txtTanggalJoin = new JTextField();
         txtCari = new JTextField();
@@ -80,14 +76,12 @@ public class FrmMember extends JFrame {
         lblId.setFont(fLabel);
         lblNama.setFont(fLabel);
         lblNoTelp.setFont(fLabel);
-        lblEmail.setFont(fLabel);
         lblPoints.setFont(fLabel);
         lblTanggalJoin.setFont(fLabel);
 
         txtIdMember.setFont(fText);
         txtNamaMember.setFont(fText);
         txtNoTelp.setFont(fText);
-        txtEmail.setFont(fText);
         spnPoints.setFont(fText);
         txtTanggalJoin.setFont(fText);
         txtCari.setFont(fText);
@@ -117,17 +111,14 @@ public class FrmMember extends JFrame {
         lblNoTelp.setBounds(xLabel, 30 + gapY * 2, 120, 25);
         txtNoTelp.setBounds(xField, 30 + gapY * 2, wField, hField);
 
-        lblEmail.setBounds(xLabel, 30 + gapY * 3, 120, 25);
-        txtEmail.setBounds(xField, 30 + gapY * 3, wField, hField);
+        lblPoints.setBounds(xLabel, 30 + gapY * 3, 120, 25);
+        spnPoints.setBounds(xField, 30 + gapY * 3, 100, hField);
 
-        lblPoints.setBounds(xLabel, 30 + gapY * 4, 120, 25);
-        spnPoints.setBounds(xField, 30 + gapY * 4, 100, hField);
-
-        lblTanggalJoin.setBounds(xLabel, 30 + gapY * 5, 120, 25);
-        txtTanggalJoin.setBounds(xField, 30 + gapY * 5, wField, hField);
+        lblTanggalJoin.setBounds(xLabel, 30 + gapY * 4, 120, 25);
+        txtTanggalJoin.setBounds(xField, 30 + gapY * 4, wField, hField);
 
         // POSISI TOMBOL (bawah - setelah form)
-        int startYTombol = 30 + gapY * 6 + 20; // Mulai dari bawah form
+        int startYTombol = 30 + gapY * 5 + 20; // Dikurangi 1 gap karena email dihapus
         int tombolWidth = 120;
         int tombolHeight = 35;
         int gapXTombol = 20; // Jarak antar tombol
@@ -149,8 +140,6 @@ public class FrmMember extends JFrame {
         add(txtNamaMember);
         add(lblNoTelp);
         add(txtNoTelp);
-        add(lblEmail);
-        add(txtEmail);
         add(lblPoints);
         add(spnPoints);
         add(lblTanggalJoin);
@@ -176,7 +165,7 @@ public class FrmMember extends JFrame {
 
         // Frame Setting - diperlebar untuk menampung lebih banyak kolom
         setTitle("Form Member Café");
-        setSize(880, 650);
+        setSize(880, 600); // Diperkecil karena ada lebih sedikit field
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -208,7 +197,6 @@ public class FrmMember extends JFrame {
             member.setIdMember(Integer.parseInt(txtIdMember.getText()));
             member.setNamaMember(txtNamaMember.getText().trim());
             member.setNoTelp(txtNoTelp.getText().trim());
-            member.setEmail(txtEmail.getText().trim());
             member.setPoints((Integer) spnPoints.getValue());
             
             // Jika ID = 0, berarti baru, set tanggal join
@@ -263,7 +251,6 @@ public class FrmMember extends JFrame {
                 txtIdMember.setText(String.valueOf(member.getIdMember()));
                 txtNamaMember.setText(member.getNamaMember());
                 txtNoTelp.setText(member.getNoTelp() != null ? member.getNoTelp() : "");
-                txtEmail.setText(member.getEmail() != null ? member.getEmail() : "");
                 spnPoints.setValue(member.getPoints() != null ? member.getPoints() : 0);
                 
                 // Format tanggal join
@@ -283,7 +270,6 @@ public class FrmMember extends JFrame {
         txtIdMember.setText("0");
         txtNamaMember.setText("");
         txtNoTelp.setText("");
-        txtEmail.setText("");
         spnPoints.setValue(0);
         txtTanggalJoin.setText("");
         txtCari.setText("");
@@ -311,7 +297,6 @@ public class FrmMember extends JFrame {
                     m.getIdMember(),
                     m.getNamaMember(),
                     m.getNoTelp() != null ? m.getNoTelp() : "-",
-                    m.getEmail() != null ? m.getEmail() : "-",
                     m.getPoints() != null ? m.getPoints() : 0,
                     tanggalJoinFormatted
                 });
@@ -326,9 +311,8 @@ public class FrmMember extends JFrame {
         tblMember.getColumnModel().getColumn(0).setPreferredWidth(50);   // ID
         tblMember.getColumnModel().getColumn(1).setPreferredWidth(150);  // Nama Member
         tblMember.getColumnModel().getColumn(2).setPreferredWidth(120);  // No. Telepon
-        tblMember.getColumnModel().getColumn(3).setPreferredWidth(150);  // Email
-        tblMember.getColumnModel().getColumn(4).setPreferredWidth(60);   // Points
-        tblMember.getColumnModel().getColumn(5).setPreferredWidth(120);  // Tanggal Join
+        tblMember.getColumnModel().getColumn(3).setPreferredWidth(60);   // Points
+        tblMember.getColumnModel().getColumn(4).setPreferredWidth(120);  // Tanggal Join
     }
 
     private void cari(String keyword) {
@@ -352,7 +336,6 @@ public class FrmMember extends JFrame {
                     m.getIdMember(),
                     m.getNamaMember(),
                     m.getNoTelp() != null ? m.getNoTelp() : "-",
-                    m.getEmail() != null ? m.getEmail() : "-",
                     m.getPoints() != null ? m.getPoints() : 0,
                     tanggalJoinFormatted
                 });

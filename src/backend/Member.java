@@ -9,19 +9,17 @@ public class Member {
     private Integer idMember;
     private String namaMember;
     private String noTelp;
-    private String email;
     private Integer points;
     private LocalDateTime tanggalJoin;
     
     // Konstruktor
     public Member() {}
     
-    public Member(Integer idMember, String namaMember, String noTelp, String email, 
+    public Member(Integer idMember, String namaMember, String noTelp, 
                   Integer points, LocalDateTime tanggalJoin) {
         this.idMember = idMember;
         this.namaMember = namaMember;
         this.noTelp = noTelp;
-        this.email = email;
         this.points = points;
         this.tanggalJoin = tanggalJoin;
     }
@@ -35,9 +33,6 @@ public class Member {
     
     public String getNoTelp() { return noTelp; }
     public void setNoTelp(String noTelp) { this.noTelp = noTelp; }
-    
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
     
     public Integer getPoints() { return points; }
     public void setPoints(Integer points) { this.points = points; }
@@ -55,9 +50,9 @@ public class Member {
     }
     
     private void insert() {
-        String sql = "INSERT INTO member (nama_member, no_telp, email, points, tanggal_join) " +
-                    "VALUES ('" + escapeSql(this.namaMember) + "', '" + escapeSql(this.noTelp) + "', '" + 
-                    escapeSql(this.email) + "', " + (this.points != null ? this.points : 0) + ", " +
+        String sql = "INSERT INTO member (nama_member, no_telp, points, tanggal_join) " +
+                    "VALUES ('" + escapeSql(this.namaMember) + "', '" + escapeSql(this.noTelp) + "', " + 
+                    (this.points != null ? this.points : 0) + ", " +
                     "CURRENT_TIMESTAMP)";
         
         int generatedId = dbHelper.insertQueryGetId(sql);
@@ -69,7 +64,6 @@ public class Member {
     private void update() {
         String sql = "UPDATE member SET nama_member = '" + escapeSql(this.namaMember) + 
                     "', no_telp = '" + escapeSql(this.noTelp) + 
-                    "', email = '" + escapeSql(this.email) + 
                     "', points = " + (this.points != null ? this.points : 0) + 
                     " WHERE id_member = " + this.idMember;
         
@@ -115,8 +109,7 @@ public class Member {
         List<Member> members = new ArrayList<>();
         String sql = "SELECT * FROM member WHERE " +
                     "LOWER(nama_member) LIKE LOWER('%" + escapeSql(keyword) + "%') OR " +
-                    "no_telp LIKE '%" + escapeSql(keyword) + "%' OR " +
-                    "LOWER(email) LIKE LOWER('%" + escapeSql(keyword) + "%') " +
+                    "no_telp LIKE '%" + escapeSql(keyword) + "%' " +
                     "ORDER BY id_member";
         
         ResultSet rs = dbHelper.selectQuery(sql);
@@ -141,7 +134,6 @@ public class Member {
         member.setIdMember(rs.getInt("id_member"));
         member.setNamaMember(rs.getString("nama_member"));
         member.setNoTelp(rs.getString("no_telp"));
-        member.setEmail(rs.getString("email"));
         member.setPoints(rs.getInt("points"));
         
         Timestamp timestamp = rs.getTimestamp("tanggal_join");
@@ -158,7 +150,6 @@ public class Member {
                 "idMember=" + idMember +
                 ", namaMember='" + namaMember + '\'' +
                 ", noTelp='" + noTelp + '\'' +
-                ", email='" + email + '\'' +
                 ", points=" + points +
                 ", tanggalJoin=" + tanggalJoin +
                 '}';
