@@ -38,9 +38,9 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     }
     
     private void isiComboNomorOrder() {
-        cmbNomorOrder.removeAllItems();
+        cmbNomorMeja.removeAllItems();
         for (int id : PesananController.getAllID()) {
-            cmbNomorOrder.addItem(String.valueOf(id));
+            cmbNomorMeja.addItem(String.valueOf(id));
         }
     }
     
@@ -53,11 +53,9 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         ButtonGroup bg = new ButtonGroup();
         bg.add(rbCash);
         bg.add(rbEWallet);
-        bg.add(rbDebit);
 
         rbCash.addActionListener(e -> tampilPanelPembayaran(true));
         rbEWallet.addActionListener(e -> tampilPanelPembayaran(false));
-        rbDebit.addActionListener(e -> tampilPanelPembayaran(false));
     }
     
      private void hitungTotalAkhir() {
@@ -69,31 +67,23 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtTotalAkhir.setText(String.valueOf(totalAkhir));
     }
     
-    private void cmbNomorOrderActionPerformed(java.awt.event.ActionEvent evt) {                                              
-        if (cmbNomorOrder.getSelectedItem() != null) {
-            int id = Integer.parseInt(cmbNomorOrder.getSelectedItem().toString());
-            double total = PesananController.getTotalBelanja(id);
-            txtTotalBelanja.setText(String.valueOf(total));
-            hitungTotalAkhir();
-        }
-    }
     
     private int getIdMemberByNama(String nama) {
-    int id = 0;
+        int id = 0;
 
-    try {
-        String q = "SELECT id_member FROM member WHERE nama_member = '" + nama + "'";
-        ResultSet rs = dbHelper.selectQuery(q);
+        try {
+            String q = "SELECT id_member FROM member WHERE nama_member = '" + nama + "'";
+            ResultSet rs = dbHelper.selectQuery(q);
 
-        if (rs.next()) {
-            id = rs.getInt("id_member");
+            if (rs.next()) {
+                id = rs.getInt("id_member");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
 
-    return id;
-}
+        return id;
+    }
     
     /**
      * This method is called from within the constructor to initialize the form.
@@ -106,6 +96,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         filler1 = new javax.swing.Box.Filler(new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 0), new java.awt.Dimension(0, 32767));
+        jPanel9 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jPanel3 = new javax.swing.JPanel();
@@ -113,7 +104,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         txtIdTransaksi = new javax.swing.JTextField();
-        cmbNomorOrder = new javax.swing.JComboBox<>();
+        cmbNomorMeja = new javax.swing.JComboBox<>();
         txtTanggal = new javax.swing.JTextField();
         jPanel4 = new javax.swing.JPanel();
         jLabel5 = new javax.swing.JLabel();
@@ -127,7 +118,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         jPanel5 = new javax.swing.JPanel();
         rbCash = new javax.swing.JRadioButton();
         rbEWallet = new javax.swing.JRadioButton();
-        rbDebit = new javax.swing.JRadioButton();
         jPanel6 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
@@ -140,7 +130,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtNomor = new javax.swing.JTextField();
         jPanel8 = new javax.swing.JPanel();
         btnProses = new javax.swing.JButton();
-        btnCetak = new javax.swing.JButton();
         btnSimpan = new javax.swing.JButton();
         jPanel10 = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
@@ -157,6 +146,17 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+
+        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 100, Short.MAX_VALUE)
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 100, Short.MAX_VALUE)
         );
 
@@ -193,7 +193,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
         jLabel2.setText("ID Transaksi");
 
-        jLabel3.setText("Nomor Order");
+        jLabel3.setText("Nomor Meja");
 
         jLabel4.setText("Tanggal/Waktu");
 
@@ -204,7 +204,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             }
         });
 
-        cmbNomorOrder.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbNomorMeja.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -212,7 +212,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(jLabel4)
                         .addGap(18, 18, 18)
@@ -221,11 +221,11 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
                             .addComponent(jLabel3))
-                        .addGap(28, 28, 28)
+                        .addGap(31, 31, 31)
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtIdTransaksi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbNomorOrder, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(cmbNomorMeja, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtIdTransaksi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(310, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -236,7 +236,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                     .addComponent(txtIdTransaksi, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbNomorOrder, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cmbNomorMeja, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -330,22 +330,23 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             }
         });
 
-        rbEWallet.setText("E-Wallet");
-
-        rbDebit.setText("Debit");
+        rbEWallet.setText("E-Wallet/Debit");
+        rbEWallet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rbEWalletActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
-                .addGap(59, 59, 59)
+                .addGap(153, 153, 153)
                 .addComponent(rbCash, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(42, 42, 42)
-                .addComponent(rbEWallet, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(rbDebit, javax.swing.GroupLayout.PREFERRED_SIZE, 98, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(44, 44, 44))
+                .addGap(45, 45, 45)
+                .addComponent(rbEWallet)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -353,8 +354,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 .addContainerGap()
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rbCash)
-                    .addComponent(rbEWallet)
-                    .addComponent(rbDebit))
+                    .addComponent(rbEWallet))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -451,13 +451,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             }
         });
 
-        btnCetak.setText("Cetak Nota");
-        btnCetak.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCetakActionPerformed(evt);
-            }
-        });
-
         btnSimpan.setText("SImpan");
         btnSimpan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -473,8 +466,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(btnProses, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnCetak)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnSimpan, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -484,7 +475,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnProses)
-                    .addComponent(btnCetak)
                     .addComponent(btnSimpan))
                 .addGap(37, 37, 37))
         );
@@ -621,6 +611,10 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
         // TODO add your handling code here:
         // Ambil nama dari TextField panel member
+        if (cmbNomorMeja.getSelectedItem() == null) {
+            JOptionPane.showMessageDialog(this, "Nomor Meja / Pesanan belum dipilih!", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         String namaMember = txtNama.getText();
 
         // Dapatkan ID member berdasarkan nama
@@ -634,7 +628,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         Transaksi t = new Transaksi();
         t.idMember = idMember; // <-- hasil pencarian member
 
-        t.idPesanan = Integer.parseInt(cmbNomorOrder.getSelectedItem().toString());
+        t.idPesanan = Integer.parseInt(cmbNomorMeja.getSelectedItem().toString());
         t.idMember = 0; // jika member nanti tinggal tambah input
 
         t.waktu = java.time.LocalDateTime.now().toString();
@@ -649,12 +643,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             t.kembalian = Double.parseDouble(txtKembalian.getText());
             t.nomor = null;
         } else if (rbEWallet.isSelected()) {
-            t.metode = "E-Wallet";
-            t.nominalBayar = t.totalAkhir;
-            t.kembalian = 0;
-            t.nomor = txtNomor.getText();
-        } else if (rbDebit.isSelected()) {
-            t.metode = "Debit";
+            t.metode = "E-Wallet/Debbit";
             t.nominalBayar = t.totalAkhir;
             t.kembalian = 0;
             t.nomor = txtNomor.getText();
@@ -665,44 +654,40 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         if (id > 0) {
             JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan! ID = " + id);
             txtIdTransaksi.setText(String.valueOf(id));
+            String nota = "";
+            nota += "       CAFE\n";
+            nota += "     STRUK PEMBAYARAN\n";
+            nota += "----------------------------------\n";
+            nota += "ID Transaksi : " + txtIdTransaksi.getText() + "\n";
+            nota += "No Pesanan   : " + cmbNomorMeja.getSelectedItem() + "\n";
+            nota += "Tanggal      : " + txtTanggal.getText() + "\n";
+            nota += "----------------------------------\n";
+            nota += "Total Belanja: " + txtTotalBelanja.getText() + "\n";
+            nota += "Diskon       : " + txtDiskon.getText() + "\n";
+            nota += "Pajak/Servis : " + txtService.getText() + "\n";
+            nota += "TOTAL AKHIR  : " + txtTotalAkhir.getText() + "\n";
+            nota += "----------------------------------\n";
+            nota += "ID Member    : " + txtIdMember.getText() + "\n";
+            nota += "Nama Member  : " + txtNama.getText() + "\n";
+            nota += "----------------------------------\n";
+            if (rbCash.isSelected()) {
+                nota += "Pembayaran   : CASH\n";
+                nota += "Dibayar      : " + txtNominalBayar.getText() + "\n";
+                nota += "Kembalian    : " + txtKembalian.getText() + "\n";
+            } else {
+                nota += "Pembayaran   : " +
+                        (rbEWallet.isSelected() ? "E-WALLET" : "DEBIT") + "\n";
+                nota += "Nomor        : " + txtNomor.getText() + "\n";
+            }
+            nota += "----------------------------------\n";
+            nota += "Terima kasih!\n";
+            nota += "----------------------------------\n";
+
+            JOptionPane.showMessageDialog(this, nota);
         } else {
             JOptionPane.showMessageDialog(this, "Gagal menyimpan transaksi.");
         }
     }//GEN-LAST:event_btnSimpanActionPerformed
-
-    private void btnCetakActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCetakActionPerformed
-        // TODO add your handling code here:
-        String nota = "";
-        nota += "       CAFE\n";
-        nota += "     STRUK PEMBAYARAN\n";
-        nota += "----------------------------------\n";
-        nota += "ID Transaksi : " + txtIdTransaksi.getText() + "\n";
-        nota += "No Pesanan   : " + cmbNomorOrder.getSelectedItem() + "\n";
-        nota += "Tanggal      : " + txtTanggal.getText() + "\n";
-        nota += "----------------------------------\n";
-        nota += "Total Belanja: " + txtTotalBelanja.getText() + "\n";
-        nota += "Diskon       : " + txtDiskon.getText() + "\n";
-        nota += "Pajak/Servis : " + txtService.getText() + "\n";
-        nota += "TOTAL AKHIR  : " + txtTotalAkhir.getText() + "\n";
-        nota += "----------------------------------\n";
-        nota += "ID Member    : " + txtIdMember.getText() + "\n";
-        nota += "Nama Member  : " + txtNama.getText() + "\n";
-        nota += "----------------------------------\n";
-        if (rbCash.isSelected()) {
-            nota += "Pembayaran   : CASH\n";
-            nota += "Dibayar      : " + txtNominalBayar.getText() + "\n";
-            nota += "Kembalian    : " + txtKembalian.getText() + "\n";
-        } else {
-            nota += "Pembayaran   : " +
-                    (rbEWallet.isSelected() ? "E-WALLET" : "DEBIT") + "\n";
-            nota += "Nomor        : " + txtNomor.getText() + "\n";
-        }
-        nota += "----------------------------------\n";
-        nota += "Terima kasih!\n";
-        nota += "----------------------------------\n";
-
-        JOptionPane.showMessageDialog(this, nota);
-    }//GEN-LAST:event_btnCetakActionPerformed
 
     private void txtServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtServiceActionPerformed
         // TODO add your handling code here:
@@ -720,6 +705,18 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
         txtIdMember.setText(String.valueOf(id));
     }//GEN-LAST:event_txtNamaActionPerformed
+
+    private void rbEWalletActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbEWalletActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_rbEWalletActionPerformed
+
+    private void cmbNomorMejaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbNomorMejaActionPerformed
+        // TODO add your handling code here:
+        String q = "select no_meja from pesanan";
+        ResultSet rs = dbHelper.selectQuery(q);
+        
+        
+    }//GEN-LAST:event_cmbNomorMejaActionPerformed
 
     /**
      * @param args the command line arguments
@@ -747,10 +744,9 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnCetak;
     private javax.swing.JButton btnProses;
     private javax.swing.JButton btnSimpan;
-    private javax.swing.JComboBox<String> cmbNomorOrder;
+    private javax.swing.JComboBox<String> cmbNomorMeja;
     private javax.swing.Box.Filler filler1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -777,8 +773,8 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JRadioButton rbCash;
-    private javax.swing.JRadioButton rbDebit;
     private javax.swing.JRadioButton rbEWallet;
     private javax.swing.JTextField txtDiskon;
     private javax.swing.JTextField txtIdMember;
