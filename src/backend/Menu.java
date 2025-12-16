@@ -11,7 +11,7 @@ public class Menu {
     private String namaKategori;
     private Double harga;
     private String statusMenu;
-    private String deskripsi;
+    
     
     // Constructors
     public Menu() {}
@@ -45,8 +45,6 @@ public class Menu {
     public String getStatusMenu() { return statusMenu; }
     public void setStatusMenu(String statusMenu) { this.statusMenu = statusMenu; }
     
-    public String getDeskripsi() { return deskripsi; }
-    public void setDeskripsi(String deskripsi) { this.deskripsi = deskripsi; }
     
     // Database operations
     public void save() {
@@ -58,13 +56,13 @@ public class Menu {
     }
     
     private void insert() {
-        String sql = "INSERT INTO menu (nama_menu, id_kategori, harga, status_menu, deskripsi) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO menu (nama_menu, id_kategori, harga, status_menu) " +
+                    "VALUES (?, ?, ?, ?)";
         
         dbHelper.bukaKoneksi();
-        int idMenu = dbHelper.insertQueryGetId(sql.replace("?, ?, ?, ?, ?", 
-            "'" + this.namaMenu + "', " + this.idKategori + ", " + this.harga + ", '" + 
-            this.statusMenu + "', '" + (this.deskripsi != null ? this.deskripsi : "") + "'"));
+        int idMenu = dbHelper.insertQueryGetId(sql.replace("?, ?, ?, ?",
+            "'" + this.namaMenu + "', " + this.idKategori + ", " + this.harga + ", '" +
+            this.statusMenu + "'"));
         
         if (idMenu > 0) {
             this.idMenu = idMenu;
@@ -75,8 +73,7 @@ public class Menu {
         String sql = "UPDATE menu SET nama_menu = '" + this.namaMenu + "', " +
                     "id_kategori = " + this.idKategori + ", " +
                     "harga = " + this.harga + ", " +
-                    "status_menu = '" + this.statusMenu + "', " +
-                    "deskripsi = '" + (this.deskripsi != null ? this.deskripsi : "") + "' " +
+                    "status_menu = '" + this.statusMenu + "' " +
                     "WHERE id_menu = " + this.idMenu;
         
         dbHelper.bukaKoneksi();
@@ -84,8 +81,55 @@ public class Menu {
     }
     
     public void delete() {
-        String sql = "DELETE FROM menu WHERE id_menu = " + this.idMenu;
+        if (this.idMenu == null || this.idMenu == 0) return;
+
         dbHelper.bukaKoneksi();
+
+        // Count references in pesanan_detail
+        String countSql = "SELECT COUNT(*) AS cnt FROM pesanan_detail WHERE id_menu = " + this.idMenu;
+        ResultSet rs = dbHelper.selectQuery(countSql);
+        try {
+            int cnt = 0;
+            if (rs != null && rs.next()) {
+                cnt = rs.getInt("cnt");
+            }
+
+            if (cnt > 0) {
+                // Provide a concise list (up to 3) of transactions that reference this menu
+                String listSql = "SELECT p.id_pesanan, COALESCE(p.no_meja,'-') AS no_meja, COALESCE(p.nama_pelanggan,'-') AS nama_pelanggan, pd.qty " +
+                                 "FROM pesanan p JOIN pesanan_detail pd ON p.id_pesanan = pd.id_pesanan " +
+                                 "WHERE pd.id_menu = " + this.idMenu + " ORDER BY p.id_pesanan ASC LIMIT 3";
+                ResultSet rs2 = dbHelper.selectQuery(listSql);
+                StringBuilder details = new StringBuilder();
+                int shown = 0;
+                while (rs2 != null && rs2.next()) {
+                    if (shown > 0) details.append("; ");
+                    String rawPelanggan = rs2.getString("nama_pelanggan");
+                    String pelangganDisplay = rawPelanggan;
+                    if (rawPelanggan != null) {
+                        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^Pelanggan\\s*(\\d+)$").matcher(rawPelanggan.trim());
+                        if (m.find()) {
+                            pelangganDisplay = "Pelanggan [" + m.group(1) + "]";
+                        }
+                    }
+                    details.append(String.format("Order #%d \u2014 Meja: %s \u2014 Pelanggan: %s \u2014 Qty: %d", rs2.getInt("id_pesanan"), rs2.getString("no_meja"), pelangganDisplay, rs2.getInt("qty")));
+                    shown++;
+                }
+
+                String more = cnt > shown ? String.format(" (+%d lagi)", cnt - shown) : "";
+                String msg;
+                if (details.length() > 0) {
+                    msg = "Tidak bisa dihapus — dipakai di: " + details.toString() + more;
+                } else {
+                    msg = "Tidak bisa dihapus — menu ini dipakai di " + cnt + " transaksi.";
+                }
+                throw new RuntimeException(msg);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        String sql = "DELETE FROM menu WHERE id_menu = " + this.idMenu;
         dbHelper.executeQuery(sql);
     }
     
@@ -151,7 +195,7 @@ public class Menu {
     
     public static Menu getMenuById(int idMenu) {
         String sql = "SELECT m.id_menu, m.nama_menu, m.id_kategori, km.nama_kategori, " +
-                    "m.harga, m.status_menu, m.deskripsi FROM menu m " +
+                    "m.harga, m.status_menu FROM menu m " +
                     "LEFT JOIN kategori_menu km ON m.id_kategori = km.id_kategori " +
                     "WHERE m.id_menu = " + idMenu;
         
@@ -168,7 +212,6 @@ public class Menu {
                     rs.getDouble("harga"),
                     rs.getString("status_menu")
                 );
-                menu.setDeskripsi(rs.getString("deskripsi"));
                 return menu;
             }
         } catch (SQLException e) {
@@ -211,5 +254,52 @@ public class Menu {
         }
         
         return 0;
+    }
+
+    // --- Usage helpers ---
+    public static int getUsageCount(int idMenu) {
+        dbHelper.bukaKoneksi();
+        String sql = "SELECT COUNT(*) AS cnt FROM pesanan_detail WHERE id_menu = " + idMenu;
+        ResultSet rs = dbHelper.selectQuery(sql);
+        try {
+            if (rs != null && rs.next()) {
+                return rs.getInt("cnt");
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting usage count: " + e.getMessage());
+        }
+        return 0;
+    }
+
+    /**
+     * Returns concise usage summaries for a menu. If limit <= 0, returns all.
+     * Each entry formatted: "#<id_pesanan> <no_meja>/<nama_pelanggan> x<qty>"
+     */
+    public static List<String> getUsageSummary(int idMenu, int limit) {
+        List<String> list = new ArrayList<>();
+        dbHelper.bukaKoneksi();
+        String sql = "SELECT p.id_pesanan, COALESCE(p.no_meja,'-') AS no_meja, COALESCE(p.nama_pelanggan,'-') AS nama_pelanggan, pd.qty " +
+                 "FROM pesanan p JOIN pesanan_detail pd ON p.id_pesanan = pd.id_pesanan " +
+                 "WHERE pd.id_menu = " + idMenu + " ORDER BY p.id_pesanan ASC";
+        if (limit > 0) sql += " LIMIT " + limit;
+
+        ResultSet rs = dbHelper.selectQuery(sql);
+        try {
+            while (rs != null && rs.next()) {
+                String rawPelanggan = rs.getString("nama_pelanggan");
+                String pelangganDisplay = rawPelanggan;
+                if (rawPelanggan != null) {
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("^Pelanggan\\s*(\\d+)$").matcher(rawPelanggan.trim());
+                    if (m.find()) {
+                        pelangganDisplay = "Pelanggan [" + m.group(1) + "]";
+                    }
+                }
+                String entry = String.format("Order #%d \u2014 Meja: %s \u2014 Pelanggan: %s \u2014 Qty: %d", rs.getInt("id_pesanan"), rs.getString("no_meja"), pelangganDisplay, rs.getInt("qty"));
+                list.add(entry);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting usage summary: " + e.getMessage());
+        }
+        return list;
     }
 }

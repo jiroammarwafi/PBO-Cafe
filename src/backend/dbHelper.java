@@ -20,9 +20,9 @@ public class dbHelper {
     public static void bukaKoneksi(){
         if (koneksi == null) {
             try {
-                String url = "jdbc:postgresql://localhost:5432/kaasir_cafee";
+                String url = "jdbc:postgresql://localhost:5432/kasir_cafe";
                 String user = "postgres";
-                String password = "1234";
+                String password = "12345678";
 
                 Class.forName("org.postgresql.Driver");
 

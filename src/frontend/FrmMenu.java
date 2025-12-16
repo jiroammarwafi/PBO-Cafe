@@ -310,11 +310,39 @@ public class FrmMenu extends JFrame {
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 int idMenu = Integer.parseInt(txtIdMenu.getText());
+
+                int cnt = Menu.getUsageCount(idMenu);
+                if (cnt > 0) {
+                    // show concise list (max 4) and two buttons: Lihat Semua, Tutup
+                    java.util.List<String> sample = Menu.getUsageSummary(idMenu, 4);
+                    StringBuilder msg = new StringBuilder();
+                    msg.append("Menu ini sudah dipakai di ").append(cnt).append(" transaksi.\n\nContoh transaksi:\n");
+                    for (String s : sample) msg.append(" - ").append(s).append("\n");
+
+                    Object[] options = {"Lihat Semua", "Tutup"};
+                    int choice = JOptionPane.showOptionDialog(this, msg.toString(), "Tidak bisa dihapus", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
+                    if (choice == 0) {
+                        // show full list in scrollable dialog
+                        java.util.List<String> all = Menu.getUsageSummary(idMenu, 0);
+                        JTextArea ta = new JTextArea(15, 50);
+                        ta.setEditable(false);
+                        StringBuilder allText = new StringBuilder();
+                        for (String s : all) allText.append(s).append("\n");
+                        ta.setText(allText.toString());
+                        JScrollPane sp = new JScrollPane(ta);
+                        sp.setPreferredSize(new Dimension(600, 300));
+                        JOptionPane.showMessageDialog(this, sp, "Daftar Transaksi yang memakai menu", JOptionPane.INFORMATION_MESSAGE);
+                    }
+                    return; // do not delete
+                }
+
                 Menu menu = new Menu();
                 menu.setIdMenu(idMenu);
                 menu.delete();
                 JOptionPane.showMessageDialog(this, "Menu berhasil dihapus!", "Success", JOptionPane.INFORMATION_MESSAGE);
                 refreshData();
+            } catch (RuntimeException rex) {
+                JOptionPane.showMessageDialog(this, rex.getMessage(), "Tidak bisa dihapus", JOptionPane.WARNING_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
