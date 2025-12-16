@@ -258,14 +258,14 @@ public class FrmLaporanPenjualan extends javax.swing.JFrame {
 
         totalTransaksi.setEditable(false);
         totalTransaksi.setFont(new java.awt.Font("Yu Gothic UI", 0, 12)); // NOI18N
-        totalTransaksi.setEnabled(false);
+        totalTransaksi.setEnabled(true);
 
         labelTotalPendapatan.setFont(new java.awt.Font("Yu Gothic UI", 0, 14)); // NOI18N
         labelTotalPendapatan.setText("Total Pendapatan");
 
         totalPendapatan.setEditable(false);
         totalPendapatan.setFont(new java.awt.Font("Yu Gothic UI", 0, 12)); // NOI18N
-        totalPendapatan.setEnabled(false);
+        totalPendapatan.setEnabled(true);
 
         jPanel4.setBackground(new java.awt.Color(180, 203, 247));
 
@@ -638,14 +638,14 @@ public class FrmLaporanPenjualan extends javax.swing.JFrame {
             .addGroup(bg_panel1Layout.createSequentialGroup()
                 .addGap(108, 108, 108)
                 .addComponent(bg_panel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(130, Short.MAX_VALUE))
+                .addContainerGap(350, Short.MAX_VALUE))
         );
         bg_panel1Layout.setVerticalGroup(
             bg_panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(bg_panel1Layout.createSequentialGroup()
                 .addGap(26, 26, 26)
                 .addComponent(bg_panel2, javax.swing.GroupLayout.PREFERRED_SIZE, 604, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(90, Short.MAX_VALUE))
+                .addContainerGap(200, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
