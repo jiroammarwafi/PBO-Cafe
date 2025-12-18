@@ -44,14 +44,15 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     public FrmTransaksiPembayaran(String namaDariPesanan) {
         initComponents();
         
-        // 1. Tampilkan nama di kedua kemungkinan field (Member & Non-Member)
         txtNama.setText(namaDariPesanan);
         txtNamaNonMember.setText(namaDariPesanan);
-        
-        // 2. Jalankan logika penentuan Panel
+
         tentukanPanelMember(namaDariPesanan);
-        
-        isiComboNomorOrder(); // Tetap panggil fungsi inisialisasi lainnya
+
+        resetForm();
+        isiComboNomorOrder();
+        groupRadioCash();
+        groupRadioMember();
     }
 
     private void resetForm() {
@@ -168,29 +169,32 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         }
 
         try {
-            // Cek apakah nama tersebut terdaftar di tabel member
-            String sql = "SELECT id_member FROM member WHERE nama_member ILIKE '" + nama.replace("'", "''") + "'";
+            // Ambil ID dan POIN dari database
+            String sql = "SELECT id_member, points FROM member WHERE nama_member ILIKE '" + nama.replace("'", "''") + "'";
             ResultSet rs = dbHelper.selectQuery(sql);
 
             if (rs != null && rs.next()) {
-                // JIKA MEMBER DITEMUKAN
                 int id = rs.getInt("id_member");
-                txtIdMember.setText(String.valueOf(id));
+                int poin = rs.getInt("points"); // Ambil poin member
                 
+                txtIdMember.setText(String.valueOf(id));
                 rbMember.setSelected(true);
                 panelMember.setVisible(true);
                 panelNonMember.setVisible(false);
+                
+                // Simpan informasi poin sementara di label (opsional) atau gunakan logika langsung
+                if (poin >= 10) {
+                    // Memberikan tanda bahwa mereka punya reward diskon
+                    txtDiskon.setToolTipText("Member memiliki " + poin + " poin. Diskon 10% aktif.");
+                }
             } else {
-                // JIKA BUKAN MEMBER
                 rbNonMember.setSelected(true);
                 panelMember.setVisible(false);
                 panelNonMember.setVisible(true);
-                
                 txtIdMember.setText("0");
             }
             
-            // Update perhitungan (karena member biasanya dapat diskon)
-            hitungDiskonDanPajak();
+            hitungDiskonDanPajak(); // Hitung ulang setelah status member dipastikan
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -889,18 +893,18 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             int idBaru = TransaksiController.insert(t);
 
             if (idBaru > 0) {
-                // 3. UPDATE STATUS BAYAR (AGAR MEJA HILANG DARI LIST)
                 PesananController.updateStatusBayar(t.idPesanan);
-                if (t.totalBelanja >= 50000) {
-                    MemberController.updatePoinMember(t.idMember, 1);
-                    System.out.println("Poin bertambah +1");
-                }
 
-                if (t.diskon > 0) {
-                    // Query langsung atau buatkan method di MemberController
-                    String resetQuery = "UPDATE member SET poin = 0 WHERE id_member = " + t.idMember;
-                    dbHelper.executeQuery(resetQuery);
-                    System.out.println("Poin direset ke 0 karena sudah digunakan untuk diskon");
+                if (t.idMember > 0) {
+                    // TAMBAH POIN jika belanja >= 50.000
+                    if (t.totalBelanja >= 50000) {
+                        dbHelper.executeQuery("UPDATE member SET poin = poin + 1 WHERE id_member = " + t.idMember);
+                    }
+
+                    // RESET POIN jika diskon digunakan (poin sudah ditukar)
+                    if (t.diskon > 0) {
+                        dbHelper.executeQuery("UPDATE member SET poin = 0 WHERE id_member = " + t.idMember);
+                    }
                 }
 
                 // 4. BUAT NOTA
@@ -933,7 +937,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Transaksi Berhasil!");
                 JOptionPane.showMessageDialog(this, nota); // Tampilkan struk
 
-                // 5. RESET DAN REFRESH COMBOBOX
                 resetForm();
                 isiComboNomorOrder(); 
                 
