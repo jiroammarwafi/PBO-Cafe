@@ -595,7 +595,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             }
         });
 
-        btnSimpan.setText("SImpan");
+        btnSimpan.setText("Simpan");
         btnSimpan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnSimpanActionPerformed(evt);
@@ -824,10 +824,8 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     private void btnProsesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProsesActionPerformed
         // TODO add your handling code here:
         try {
-            // 1. Jalankan perhitungan (Total Belanja + Pajak - Diskon)
             hitungDiskonDanPajak(); 
-            
-            // 2. Ambil nilai total akhir yang harus dibayar
+
             double totalAkhir = Double.parseDouble(txtTotalAkhir.getText().replace(",", "."));
             
             // 3. Validasi khusus jika metode pembayaran adalah CASH
@@ -849,10 +847,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 // Hitung Kembalian
                 double kembalian = bayar - totalAkhir;
                 txtKembalian.setText(String.format("%.0f", kembalian));
-            } 
-            
-            // 4. Validasi khusus jika metode pembayaran adalah DIGITAL (E-Wallet/Kartu)
-            else if (rbEWallet.isSelected()) {
+            }  else if (rbEWallet.isSelected()) {
                 if (txtNomor.getText().trim().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Isi Nomor Kartu/Referensi dulu!");
                     btnSimpan.setEnabled(false);
@@ -860,8 +855,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 }
             }
 
-            // 5. JIKA SEMUA VALIDASI LOLOS (TIDAK KENA 'RETURN')
-            // MAKA AKTIFKAN TOMBOL SIMPAN
             btnSimpan.setEnabled(true);
             
             // Beri tanda visual agar user tahu
@@ -917,14 +910,13 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 PesananController.updateStatusBayar(t.idPesanan);
 
                 if (t.idMember > 0) {
-                    // TAMBAH POIN jika belanja >= 50.000
+
                     if (t.totalBelanja >= 50000) {
-                        dbHelper.executeQuery("UPDATE member SET poin = poin + 1 WHERE id_member = " + t.idMember);
+                        dbHelper.executeQuery("UPDATE member SET points = points + 10 WHERE id_member = " + t.idMember);
                     }
 
-                    // RESET POIN jika diskon digunakan (poin sudah ditukar)
                     if (t.diskon > 0) {
-                        dbHelper.executeQuery("UPDATE member SET poin = 0 WHERE id_member = " + t.idMember);
+                        dbHelper.executeQuery("UPDATE member SET points = 0 WHERE id_member = " + t.idMember);
                     }
                 }
 
@@ -1017,7 +1009,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
             if (rs != null && rs.next()) {
                 txtIdMember.setText(String.valueOf(rs.getInt("id_member")));
-                // Panggil perhitungan setelah ID ditemukan
                 hitungDiskonDanPajak(); 
             } else {
                 txtIdMember.setText("0");
@@ -1031,6 +1022,9 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void rbEWalletActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbEWalletActionPerformed
         // TODO add your handling code here:
+        // TODO add your handling code here:
+        panelCash.setVisible(false);
+        panelDigital.setVisible(true);
     }//GEN-LAST:event_rbEWalletActionPerformed
 
     private void cmbNomorMejaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbNomorMejaActionPerformed
