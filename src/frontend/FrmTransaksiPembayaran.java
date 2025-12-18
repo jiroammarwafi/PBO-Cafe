@@ -5,19 +5,15 @@
 package frontend;
 
 import backend.*;
+import backend.TransaksiBackend.MemberController;
+import backend.TransaksiBackend.PesananController;
 import backend.TransaksiBackend.Transaksi;
 import backend.TransaksiBackend.TransaksiController;
-import backend.TransaksiBackend.PesananController;
-import backend.TransaksiBackend.MemberController;
-
-import java.awt.event.*;
-import javax.swing.*;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.*;
 
 /**
  *
@@ -31,10 +27,31 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     public FrmTransaksiPembayaran() {
         initComponents();
+        cmbNomorMeja.addActionListener(e -> {
+            ambilTotalBelanjaMeja();
+        });
         resetForm();
         isiComboNomorOrder();
         groupRadioCash();
         groupRadioMember();
+        panelMember.setVisible(false);
+        panelDigital.setVisible(false);
+        txtDiskon.setEditable(false);
+        txtService.setEditable(false);
+    }
+
+    // Di dalam FrmTransaksiPembayaran.java
+    public FrmTransaksiPembayaran(String namaDariPesanan) {
+        initComponents();
+        
+        // 1. Tampilkan nama di kedua kemungkinan field (Member & Non-Member)
+        txtNama.setText(namaDariPesanan);
+        txtNamaNonMember.setText(namaDariPesanan);
+        
+        // 2. Jalankan logika penentuan Panel
+        tentukanPanelMember(namaDariPesanan);
+        
+        isiComboNomorOrder(); // Tetap panggil fungsi inisialisasi lainnya
     }
 
     private void resetForm() {
@@ -48,14 +65,53 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtKembalian.setText("0");
         txtIdMember.setText("0");
         txtNama.setText("");
-        btnSimpan.setEnabled(false); // Tombol simpan terkunci sampai "Proses" diklik
+        btnSimpan.setEnabled(false); 
+        txtDiskon.setEditable(false);
+        txtService.setEditable(false);// Tombol simpan terkunci sampai "Proses" diklik
     }
 
     private void isiComboNomorOrder() {
-        cmbNomorMeja.removeAllItems();
-        ArrayList<TransaksiBackend.Pesanan> listMeja = PesananController.getNomorMejaTerakhir();
-        for (TransaksiBackend.Pesanan p : listMeja) {
-            cmbNomorMeja.addItem(String.valueOf(p.getNoMeja()));
+        cmbNomorMeja.removeAllItems(); 
+    ArrayList<TransaksiBackend.Pesanan> listMeja = PesananController.getNomorMejaTerakhir();
+    
+        if (listMeja.isEmpty()) {
+            cmbNomorMeja.addItem("-- Tidak ada pesanan --");
+            txtTotalBelanja.setText("0");
+            txtTotalAkhir.setText("0");
+        } else {
+            for (TransaksiBackend.Pesanan p : listMeja) {
+                cmbNomorMeja.addItem(String.valueOf(p.getNoMeja()));
+            }
+            
+            // Pilih meja paling atas
+            cmbNomorMeja.setSelectedIndex(0);
+            
+            // Panggil fungsi secara manual satu kali untuk inisialisasi total belanja
+            ambilTotalBelanjaMeja();
+        }
+    }
+
+    private void ambilTotalBelanjaMeja() {
+        Object selectedItem = cmbNomorMeja.getSelectedItem();
+    
+        if (selectedItem != null && !selectedItem.toString().contains("-")) {
+            try {
+                int noMeja = Integer.parseInt(selectedItem.toString());
+                ArrayList<TransaksiBackend.Pesanan> list = PesananController.getNomorMejaTerakhir();
+                
+                for (TransaksiBackend.Pesanan p : list) {
+                    if (p.getNoMeja() == noMeja) {
+                        double total = PesananController.getTotalBelanja(p.getIdOrder());
+                        txtTotalBelanja.setText(String.format("%.0f", total));
+                        
+                        // Update perhitungan pajak dan diskon otomatis
+                        hitungDiskonDanPajak();
+                        break;
+                    }
+                }
+            } catch (NumberFormatException e) {
+                txtTotalBelanja.setText("0");
+            }
         }
     }
 
@@ -78,36 +134,70 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         rbNonMember.addActionListener(e -> { panelMember.setVisible(false); panelNonMember.setVisible(true); });
     }
 
-    private void cekIdMember() {
-        String nama = txtNama.getText().trim();
-        if (!nama.isEmpty()) {
-            int id = MemberController.getIdMemberByNama(nama);
-            if (id != 0) {
-                txtIdMember.setText(String.valueOf(id));
-                hitungDiskonDanPajak();
-            } else {
-                txtIdMember.setText("0");
-                JOptionPane.showMessageDialog(this, "Member tidak ditemukan!");
-            }
-        }
-    }
-
     private void hitungDiskonDanPajak() {
-        double belanja = Double.parseDouble(txtTotalBelanja.getText());
-        double pajak = belanja * 0.10;
-        double diskon = 0;
+        try {
+            double totalBelanja = Double.parseDouble(txtTotalBelanja.getText().isEmpty() ? "0" : txtTotalBelanja.getText());
 
-        if (rbMember.isSelected()) {
-            int id = Integer.parseInt(txtIdMember.getText());
-            int poin = MemberController.getPoinMember(id);
-            diskon = (poin / 10) * 5000; // Contoh: tiap 10 poin diskon 5rb
+            double pajak = totalBelanja * 0.10;
+
+            double diskon = 0;
+            if (rbMember.isSelected()) {
+                int idMember = Integer.parseInt(txtIdMember.getText());
+                if (idMember > 0) {
+                    diskon = totalBelanja * 0.05;
+                }
+            }
+
+            double totalAkhir = totalBelanja + pajak - diskon;
+
+            txtService.setText(String.format("%.0f", pajak));
+            txtDiskon.setText(String.format("%.0f", diskon));
+            txtTotalAkhir.setText(String.format("%.0f", totalAkhir));
+            
+        } catch (NumberFormatException e) {
+            System.out.println("Error hitung: " + e.getMessage());
+        }
+    }
+        
+    private void tentukanPanelMember(String nama) {
+        if (nama.isEmpty()) {
+            rbNonMember.setSelected(true);
+            panelMember.setVisible(false);
+            panelNonMember.setVisible(true);
+            return;
         }
 
-        txtService.setText(String.valueOf(pajak));
-        txtDiskon.setText(String.valueOf(diskon));
-        txtTotalAkhir.setText(String.valueOf(belanja + pajak - diskon));
+        try {
+            // Cek apakah nama tersebut terdaftar di tabel member
+            String sql = "SELECT id_member FROM member WHERE nama_member ILIKE '" + nama.replace("'", "''") + "'";
+            ResultSet rs = dbHelper.selectQuery(sql);
+
+            if (rs != null && rs.next()) {
+                // JIKA MEMBER DITEMUKAN
+                int id = rs.getInt("id_member");
+                txtIdMember.setText(String.valueOf(id));
+                
+                rbMember.setSelected(true);
+                panelMember.setVisible(true);
+                panelNonMember.setVisible(false);
+            } else {
+                // JIKA BUKAN MEMBER
+                rbNonMember.setSelected(true);
+                panelMember.setVisible(false);
+                panelNonMember.setVisible(true);
+                
+                txtIdMember.setText("0");
+            }
+            
+            // Update perhitungan (karena member biasanya dapat diskon)
+            hitungDiskonDanPajak();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    /**
+
+     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
      * regenerated by the Form Editor.
@@ -562,7 +652,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 .addContainerGap(16, Short.MAX_VALUE))
         );
 
-        panelNonMember.setBorder(new javax.swing.border.MatteBorder(null));
+        panelNonMember.setBorder(new javax.swing.border.LineBorder(null));
 
         jLabel17.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel17.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -698,6 +788,8 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void rbCashActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbCashActionPerformed
         // TODO add your handling code here:
+        panelCash.setVisible(true);
+        panelDigital.setVisible(false);
     }//GEN-LAST:event_rbCashActionPerformed
 
     private void txtKembalianActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtKembalianActionPerformed
@@ -706,105 +798,164 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void btnProsesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProsesActionPerformed
         // TODO add your handling code here:
-        if (rbCash.isSelected()) {
-            double bayar = Double.parseDouble(txtNominalBayar.getText());
-            double total = Double.parseDouble(txtTotalAkhir.getText());
-
-            double kembali = bayar - total;
-            txtKembalian.setText(String.valueOf(kembali));
-
-            if (kembali < 0) {
-                JOptionPane.showMessageDialog(this, 
-                    "Nominal bayar kurang!", 
-                    "Error", JOptionPane.ERROR_MESSAGE);
+        try {
+            // 1. Jalankan perhitungan (Total Belanja + Pajak - Diskon)
+            hitungDiskonDanPajak(); 
+            
+            // 2. Ambil nilai total akhir yang harus dibayar
+            double totalAkhir = Double.parseDouble(txtTotalAkhir.getText().replace(",", "."));
+            
+            // 3. Validasi khusus jika metode pembayaran adalah CASH
+            if (rbCash.isSelected()) {
+                if (txtNominalBayar.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Silakan isi Nominal Bayar dulu!");
+                    btnSimpan.setEnabled(false); // Pastikan tetap mati
+                    return;
+                }
+                
+                double bayar = Double.parseDouble(txtNominalBayar.getText().replace(",", "."));
+                
+                if (bayar < totalAkhir) {
+                    JOptionPane.showMessageDialog(this, "Uang Kurang! Tidak bisa memproses simpan.");
+                    btnSimpan.setEnabled(false); // Tetap matikan jika uang kurang
+                    return;
+                }
+                
+                // Hitung Kembalian
+                double kembalian = bayar - totalAkhir;
+                txtKembalian.setText(String.format("%.0f", kembalian));
+            } 
+            
+            // 4. Validasi khusus jika metode pembayaran adalah DIGITAL (E-Wallet/Kartu)
+            else if (rbEWallet.isSelected()) {
+                if (txtNomor.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Isi Nomor Kartu/Referensi dulu!");
+                    btnSimpan.setEnabled(false);
+                    return;
+                }
             }
+
+            // 5. JIKA SEMUA VALIDASI LOLOS (TIDAK KENA 'RETURN')
+            // MAKA AKTIFKAN TOMBOL SIMPAN
+            btnSimpan.setEnabled(true);
+            
+            // Beri tanda visual agar user tahu
+            btnSimpan.requestFocus(); 
+            JOptionPane.showMessageDialog(this, "Perhitungan Selesai. Silakan klik SIMPAN.");
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Input angka tidak valid! Periksa Nominal Bayar.");
+            btnSimpan.setEnabled(false);
         }
     }//GEN-LAST:event_btnProsesActionPerformed
 
-    private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
-        // TODO add your handling code here:
-        // Ambil nama dari TextField panel member
-        if (cmbNomorMeja.getSelectedItem() == null) {
-            JOptionPane.showMessageDialog(this, "Nomor Meja / Pesanan belum dipilih!", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        String namaMember = txtNama.getText();
+   private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {
+        // 1. Matikan tombol segera agar tidak diklik dua kali
+        btnSimpan.setEnabled(false);
 
-        // Dapatkan ID member berdasarkan nama
-        int idMember = getIdMemberByNama(namaMember);
+        try {
+            Transaksi t = new Transaksi();
+            
+            // --- SET DATA TRANSAKSI ---
+            // Penanganan Waktu
+            if (txtTanggal.getText().isEmpty() || txtTanggal.getText().equals("null")) {
+                t.waktu = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            } else {
+                t.waktu = txtTanggal.getText();
+            }
 
-        // Jika member tidak ditemukan (tidak wajib)
-        if (idMember == 0) {
-            System.out.println("Tidak ada member, transaksi dianggap non-member.");
-        }
-
-        Transaksi t = new Transaksi();
-        t.idMember = idMember; // <-- hasil pencarian member
-
-        t.idPesanan = Integer.parseInt(cmbNomorMeja.getSelectedItem().toString());
-        t.idMember = 0; // jika member nanti tinggal tambah input
-
-        t.waktu = java.time.LocalDateTime.now().toString();
-        t.totalBelanja = Double.parseDouble(txtTotalBelanja.getText());
-        t.diskon = Double.parseDouble(txtDiskon.getText().isEmpty() ? "0" : txtDiskon.getText());
-        t.pajak = Double.parseDouble(txtService.getText().isEmpty() ? "0" : txtService.getText());
-        t.totalAkhir = Double.parseDouble(txtTotalAkhir.getText());
-
-        if (rbCash.isSelected()) {
-            t.metode = "Cash";
+            // Ambil ID Pesanan dari Meja yang dipilih
+            int noMeja = Integer.parseInt(cmbNomorMeja.getSelectedItem().toString());
+            ArrayList<TransaksiBackend.Pesanan> list = PesananController.getNomorMejaTerakhir();
+            for(TransaksiBackend.Pesanan p : list) {
+                if(p.getNoMeja() == noMeja) {
+                    t.idPesanan = p.getIdOrder();
+                    break;
+                }
+            }
+            
+            // Set data lainnya dari TextField
+            t.idMember = Integer.parseInt(txtIdMember.getText());
+            t.totalBelanja = Double.parseDouble(txtTotalBelanja.getText());
+            t.diskon = Double.parseDouble(txtDiskon.getText());
+            t.pajak = Double.parseDouble(txtService.getText());
+            t.totalAkhir = Double.parseDouble(txtTotalAkhir.getText());
             t.nominalBayar = Double.parseDouble(txtNominalBayar.getText());
             t.kembalian = Double.parseDouble(txtKembalian.getText());
-            t.nomor = null;
-        } else if (rbEWallet.isSelected()) {
-            t.metode = "E-Wallet/Debbit";
-            t.nominalBayar = t.totalAkhir;
-            t.kembalian = 0;
+            t.metode = rbCash.isSelected() ? "Cash" : (rbEWallet.isSelected() ? "E-WALLET" : "DEBIT");
             t.nomor = txtNomor.getText();
-        }
 
-        int id = TransaksiController.insert(t);
+            // 2. PROSES SIMPAN (HANYA DIPANGGIL 1 KALI)
+            int idBaru = TransaksiController.insert(t);
 
-        if (id > 0) {
-            JOptionPane.showMessageDialog(this, "Transaksi berhasil disimpan! ID = " + id);
-            txtIdTransaksi.setText(String.valueOf(id));
-            String nota = "";
-            nota += "       CAFE\n";
-            nota += "     STRUK PEMBAYARAN\n";
-            nota += "----------------------------------\n";
-            nota += "ID Transaksi : " + txtIdTransaksi.getText() + "\n";
-            nota += "No Pesanan   : " + cmbNomorMeja.getSelectedItem() + "\n";
-            nota += "Tanggal      : " + txtTanggal.getText() + "\n";
-            nota += "----------------------------------\n";
-            nota += "Total Belanja: " + txtTotalBelanja.getText() + "\n";
-            nota += "Diskon       : " + txtDiskon.getText() + "\n";
-            nota += "Pajak/Servis : " + txtService.getText() + "\n";
-            nota += "TOTAL AKHIR  : " + txtTotalAkhir.getText() + "\n";
-            nota += "----------------------------------\n";
-            nota += "ID Member    : " + txtIdMember.getText() + "\n";
-            nota += "Nama Member  : " + txtNama.getText() + "\n";
-            nota += "----------------------------------\n";
-            if (rbCash.isSelected()) {
-                nota += "Pembayaran   : CASH\n";
-                nota += "Dibayar      : " + txtNominalBayar.getText() + "\n";
-                nota += "Kembalian    : " + txtKembalian.getText() + "\n";
+            if (idBaru > 0) {
+                // 3. UPDATE STATUS BAYAR (AGAR MEJA HILANG DARI LIST)
+                PesananController.updateStatusBayar(t.idPesanan);
+                if (t.totalBelanja >= 50000) {
+                    MemberController.updatePoinMember(t.idMember, 1);
+                    System.out.println("Poin bertambah +1");
+                }
+
+                if (t.diskon > 0) {
+                    // Query langsung atau buatkan method di MemberController
+                    String resetQuery = "UPDATE member SET poin = 0 WHERE id_member = " + t.idMember;
+                    dbHelper.executeQuery(resetQuery);
+                    System.out.println("Poin direset ke 0 karena sudah digunakan untuk diskon");
+                }
+
+                // 4. BUAT NOTA
+                String nota = "----------------CAFE----------------\n"
+                            + "---------STRUK PEMBAYARAN---------\n"
+                            + "----------------------------------\n"
+                            + "ID Transaksi : " + idBaru + "\n"
+                            + "No Meja      : " + noMeja + "\n"
+                            + "Tanggal      : " + t.waktu + "\n"
+                            + "----------------------------------\n"
+                            + "Total Belanja: " + t.totalBelanja + "\n"
+                            + "Diskon       : " + t.diskon + "\n"
+                            + "Pajak/Servis : " + t.pajak + "\n"
+                            + "TOTAL AKHIR  : " + t.totalAkhir + "\n"
+                            + "----------------------------------\n"
+                            + "Member       : " + txtNama.getText() + " (" + t.idMember + ")\n"
+                            + "----------------------------------\n";
+                
+                if (rbCash.isSelected()) {
+                    nota += "Pembayaran   : CASH\n"
+                        + "Dibayar      : " + t.nominalBayar + "\n"
+                        + "Kembalian    : " + t.kembalian + "\n";
+                } else {
+                    nota += "Pembayaran   : " + t.metode + "\n"
+                        + "No. Ref      : " + t.nomor + "\n";
+                }
+                nota += "----------------------------------\n"
+                    + "     Terima kasih!\n";
+
+                JOptionPane.showMessageDialog(this, "Transaksi Berhasil!");
+                JOptionPane.showMessageDialog(this, nota); // Tampilkan struk
+
+                // 5. RESET DAN REFRESH COMBOBOX
+                resetForm();
+                isiComboNomorOrder(); 
+                
             } else {
-                nota += "Pembayaran   : " +
-                        (rbEWallet.isSelected() ? "E-WALLET" : "DEBIT") + "\n";
-                nota += "Nomor        : " + txtNomor.getText() + "\n";
+                JOptionPane.showMessageDialog(this, "Gagal Simpan ke Database.");
+                btnSimpan.setEnabled(true);
             }
-            nota += "----------------------------------\n";
-            nota += "Terima kasih!\n";
-            nota += "----------------------------------\n";
+            
+            if (t.idMember > 0 && Double.parseDouble(txtDiskon.getText()) > 0) {
+                String sqlReset = "UPDATE member SET points = 0 WHERE id_member = " + t.idMember;
+                dbHelper.executeQuery(sqlReset);
+            }
 
-            JOptionPane.showMessageDialog(this, nota);
-        } else {
-            JOptionPane.showMessageDialog(this, "Gagal menyimpan transaksi.");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Terjadi Kesalahan: " + e.getMessage());
+            btnSimpan.setEnabled(true);
         }
-    }//GEN-LAST:event_btnSimpanActionPerformed
+    }
 
     private void txtServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtServiceActionPerformed
         // TODO add your handling code here:
-        hitungTotalAkhir();
+        hitungDiskonDanPajak();
     }//GEN-LAST:event_txtServiceActionPerformed
 
     private void txtIdMemberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtIdMemberActionPerformed
@@ -813,10 +964,17 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void txtNamaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNamaActionPerformed
         // TODO add your handling code here:
-        String nama = txtNama.getText();
-        int id = getIdMemberByNama(nama);
-
-        txtIdMember.setText(String.valueOf(id));
+        String nama = txtNama.getText().trim();
+        int id = MemberController.getIdMemberByNama(nama);
+        if (id > 0) {
+            txtIdMember.setText(String.valueOf(id));
+            hitungDiskonDanPajak(); // Langsung hitung diskon setelah ID ditemukan
+            JOptionPane.showMessageDialog(this, "Member ditemukan!");
+        } else {
+            txtIdMember.setText("0");
+            hitungDiskonDanPajak();
+            JOptionPane.showMessageDialog(this, "Member tidak ditemukan.");
+        }
     }//GEN-LAST:event_txtNamaActionPerformed
 
     private void rbEWalletActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbEWalletActionPerformed
@@ -837,6 +995,10 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void rbMemberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbMemberActionPerformed
         // TODO add your handling code here:
+        panelMember.setVisible(true);
+        panelNonMember.setVisible(false);
+        txtIdMember.setText("0"); // Reset
+        hitungDiskonDanPajak();   // Update total (diskon jadi aktif)
     }//GEN-LAST:event_rbMemberActionPerformed
 
     private void rbNonMemberActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbNonMemberActionPerformed

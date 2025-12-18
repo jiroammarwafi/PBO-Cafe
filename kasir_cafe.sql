@@ -1863,3 +1863,8 @@ ALTER TABLE ONLY public.transaksi
 
 \unrestrict gzCiTcW1bWiSfjhluZh13Qz9UtwfYDqRjQgLbCDm2hbSEJZIOxHhhSe5u0BlXSu
 
+ALTER TABLE pesanan 
+ADD COLUMN status_bayar INTEGER DEFAULT 0;
+
+alter table transaksi
+add column nomor_kartu_ewallet integer;

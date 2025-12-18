@@ -291,6 +291,10 @@ public class FrmPesanan extends JFrame {
         }
     }
 
+    public String getNama(){
+        return txtNama.getText().trim();
+    }
+
     private void loadMenu() {
         modelMenu.setRowCount(0);
         String sql = "SELECT nama_menu, harga FROM menu WHERE status_menu = 'Tersedia'";
