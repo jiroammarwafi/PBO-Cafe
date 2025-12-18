@@ -912,7 +912,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 if (t.idMember > 0) {
 
                     if (t.totalBelanja >= 50000) {
-                        dbHelper.executeQuery("UPDATE member SET points = points + 10 WHERE id_member = " + t.idMember);
+                        dbHelper.executeQuery("UPDATE member SET points = points + 1 WHERE id_member = " + t.idMember);
                     }
 
                     if (t.diskon > 0) {
@@ -1004,7 +1004,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
         try {
             // Cari ID dan Poin berdasarkan nama yang diketik
-            String sql = "SELECT id_member, poin FROM member WHERE nama_member ILIKE '" + namaCari.replace("'", "''") + "%'";
+            String sql = "SELECT id_member, points FROM member WHERE nama_member ILIKE '" + namaCari.replace("'", "''") + "%'";
             ResultSet rs = dbHelper.selectQuery(sql);
 
             if (rs != null && rs.next()) {
