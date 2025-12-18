@@ -25,6 +25,7 @@ public class FrmPesanan extends JFrame {
     private JLabel lblSubtotal, lblMemberStatus;
     private JButton btnCari, btnSimpan, btnDetail, btnHapus;
     private JButton btnKembali;
+    private JButton btnExtra;
 
     // Debounce timer to prevent too frequent cart updates
     private Timer cartUpdateTimer;
@@ -188,6 +189,14 @@ public class FrmPesanan extends JFrame {
             JOptionPane.showMessageDialog(this, "Pesanan berhasil dihapus!");
 
             loadDataPesanan(); // Refresh tabel bawah
+        });
+
+        // ================= TOMBOL EXTRA (sudut bawah kiri) =================
+        btnExtra = new JButton("Bayar");
+        btnExtra.setBounds(760, 570, 100, 25);
+        add(btnExtra);
+        btnExtra.addActionListener(e -> {
+            btnBayarActionPerformed(e);
         });
 
         // ================= Debounce Timer =================
@@ -523,6 +532,17 @@ public class FrmPesanan extends JFrame {
             ex.printStackTrace();
         }
     }
+    private void btnBayarActionPerformed(java.awt.event.ActionEvent evt) {
+    String nama = txtNama.getText().trim();
+    
+    // Membuka form transaksi sambil mengirim nama
+    FrmTransaksiPembayaran frm = new FrmTransaksiPembayaran(nama);
+    frm.setVisible(true);
+    
+    // Opsional: tutup form pesanan
+    this.dispose(); 
+}
+
 
     public static void main(String[] args) {
         // run on EDT
