@@ -123,9 +123,21 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void groupRadioCash() {
         ButtonGroup bg = new ButtonGroup();
-        bg.add(rbCash); bg.add(rbEWallet);
-        rbCash.addActionListener(e -> { panelCash.setVisible(true); panelDigital.setVisible(false); });
-        rbEWallet.addActionListener(e -> { panelCash.setVisible(false); panelDigital.setVisible(true); });
+        bg.add(rbMember); 
+        bg.add(rbNonMember);
+        
+        rbMember.addActionListener(e -> { 
+            panelMember.setVisible(true); 
+            panelNonMember.setVisible(false);
+            hitungDiskonDanPajak();
+        });
+        
+        rbNonMember.addActionListener(e -> { 
+            panelMember.setVisible(false); 
+            panelNonMember.setVisible(true);
+            txtDiskon.setText("0");
+            hitungDiskonDanPajak(); 
+        });
     }
 
     private void groupRadioMember() {
@@ -135,28 +147,37 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         rbNonMember.addActionListener(e -> { panelMember.setVisible(false); panelNonMember.setVisible(true); });
     }
 
-    private void hitungDiskonDanPajak() {
+   private void hitungDiskonDanPajak() {
         try {
             double totalBelanja = Double.parseDouble(txtTotalBelanja.getText().isEmpty() ? "0" : txtTotalBelanja.getText());
-
             double pajak = totalBelanja * 0.10;
-
             double diskon = 0;
-            if (rbMember.isSelected()) {
-                int idMember = Integer.parseInt(txtIdMember.getText());
-                if (idMember > 0) {
-                    diskon = totalBelanja * 0.05;
+
+            if (rbMember.isSelected() && !txtIdMember.getText().equals("0")) {
+                int idMem = Integer.parseInt(txtIdMember.getText());
+                
+                // Ambil poin dari database
+                String queryPoin = "SELECT points FROM member WHERE id_member = " + idMem;
+                ResultSet rs = dbHelper.selectQuery(queryPoin);
+                
+                if (rs != null && rs.next()) {
+                    int poin = rs.getInt("points");
+
+                    if (poin >= 10) {
+                        diskon = totalBelanja * 0.10;
+                    }
                 }
             }
 
             double totalAkhir = totalBelanja + pajak - diskon;
 
+            // Tampilkan ke masing-masing field
             txtService.setText(String.format("%.0f", pajak));
-            txtDiskon.setText(String.format("%.0f", diskon));
+            txtDiskon.setText(String.format("%.0f", diskon)); 
             txtTotalAkhir.setText(String.format("%.0f", totalAkhir));
             
-        } catch (NumberFormatException e) {
-            System.out.println("Error hitung: " + e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Gagal menghitung: " + e.getMessage());
         }
     }
         
@@ -979,6 +1000,34 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Member tidak ditemukan.");
         }
     }//GEN-LAST:event_txtNamaActionPerformed
+
+    private void txtNamaKeyReleased(java.awt.event.KeyEvent evt) {                                    
+        String namaCari = txtNama.getText().trim();
+        
+        if (namaCari.isEmpty()) {
+            txtIdMember.setText("0");
+            hitungDiskonDanPajak();
+            return;
+        }
+
+        try {
+            // Cari ID dan Poin berdasarkan nama yang diketik
+            String sql = "SELECT id_member, poin FROM member WHERE nama_member ILIKE '" + namaCari.replace("'", "''") + "%'";
+            ResultSet rs = dbHelper.selectQuery(sql);
+
+            if (rs != null && rs.next()) {
+                txtIdMember.setText(String.valueOf(rs.getInt("id_member")));
+                // Panggil perhitungan setelah ID ditemukan
+                hitungDiskonDanPajak(); 
+            } else {
+                txtIdMember.setText("0");
+                txtDiskon.setText("0");
+                hitungDiskonDanPajak();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private void rbEWalletActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rbEWalletActionPerformed
         // TODO add your handling code here:

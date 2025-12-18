@@ -77,7 +77,10 @@ public class TransaksiBackend {
         public static ArrayList<Pesanan> getNomorMejaTerakhir() {
             ArrayList<Pesanan> list = new ArrayList<>();
             // Gunakan spasi yang benar pada query
-            String q = "SELECT id_pesanan, no_meja FROM pesanan WHERE status_bayar = 0 ORDER BY no_meja ASC";
+            String q = "SELECT id_pesanan, no_meja " +
+               "FROM pesanan " +
+               "WHERE status_bayar = 0 " +
+               "ORDER BY waktu_pesan DESC";
             
             try (ResultSet rs = dbHelper.selectQuery(q)) {
                 if (rs != null) {
