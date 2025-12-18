@@ -53,6 +53,23 @@ public class Kategori {
         return kat;
     }
 
+    // Ambil 1 kategori berdasarkan nama
+    public Kategori getByNama(String nama) {
+        Kategori kat = new Kategori();
+        ResultSet rs = dbHelper.selectQuery(
+                "SELECT * FROM kategori_menu WHERE nama_kategori = '" + nama + "'"
+        );
+        try {
+            if (rs.next()) {
+                kat.setIdkategori(rs.getInt("id_kategori"));
+                kat.setNama(rs.getString("nama_kategori"));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return kat;
+    }
+
     // Ambil semua kategori
     public ArrayList<Kategori> getAll() {
         ArrayList<Kategori> listKategori = new ArrayList<>();
