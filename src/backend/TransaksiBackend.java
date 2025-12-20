@@ -116,6 +116,19 @@ public class TransaksiBackend {
             String q = "UPDATE pesanan SET status_bayar = 1 WHERE id_pesanan = " + idOrder;
             dbHelper.executeQuery(q);
         }
+
+        public static boolean isPesananProcessed(int idOrder) {
+            boolean processed = false;
+            String q = "SELECT status_bayar FROM pesanan WHERE id_pesanan = " + idOrder;
+            try (ResultSet rs = dbHelper.selectQuery(q)) {
+                if (rs != null && rs.next()) {
+                    processed = rs.getInt("status_bayar") == 1;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return processed;
+        }
     }
 
     // --- CONTROLLER: MemberController ---

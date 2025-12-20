@@ -166,8 +166,23 @@ public class FrmPesanan extends JFrame {
                 return;
             }
 
-            String deleteDetail = "DELETE FROM pesanan_detail WHERE id_pesanan=" + id;
-            String deletePesanan = "DELETE FROM pesanan WHERE id_pesanan=" + id;
+            int idInt = -1;
+            try {
+                idInt = Integer.parseInt(id);
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "ID pesanan tidak valid!");
+                return;
+            }
+
+            // Cek apakah pesanan sudah diproses (sudah dibayar / punya transaksi)
+            boolean processed = backend.TransaksiBackend.PesananController.isPesananProcessed(idInt);
+            if (processed) {
+                JOptionPane.showMessageDialog(this, "Pesanan sudah diproses di form transaksi, tidak dapat dihapus.");
+                return;
+            }
+
+            String deleteDetail = "DELETE FROM pesanan_detail WHERE id_pesanan=" + idInt;
+            String deletePesanan = "DELETE FROM pesanan WHERE id_pesanan=" + idInt;
 
             dbHelper.executeQuery(deleteDetail);
             dbHelper.executeQuery(deletePesanan);
