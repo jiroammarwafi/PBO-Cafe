@@ -53,10 +53,14 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         isiComboNomorOrder();
         groupRadioCash();
         groupRadioMember();
-        panelMember.setVisible(false);
-        panelDigital.setVisible(false);
         txtDiskon.setEditable(false);
         txtService.setEditable(false);
+
+        //Perbaikan action radio button dan panel member serta metode pembayaran
+        rbCash.setSelected(true);
+        rbMember.setSelected(true);
+        panelNonMember.setVisible(false);
+        panelDigital.setVisible(false);
     }
 
     public FrmTransaksiPembayaran(String namaDariPesanan) {
@@ -136,20 +140,21 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtTanggal.setText(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
 
+    //perbaikan radio button
     private void groupRadioCash() {
         ButtonGroup bg = new ButtonGroup();
-        bg.add(rbMember); 
-        bg.add(rbNonMember);
+        bg.add(rbCash); 
+        bg.add(rbEWallet);
         
-        rbMember.addActionListener(e -> { 
-            panelMember.setVisible(true); 
-            panelNonMember.setVisible(false);
+        rbCash.addActionListener(e -> { 
+            panelCash.setVisible(true); 
+            panelDigital.setVisible(false);
             hitungDiskonDanPajak();
         });
         
-        rbNonMember.addActionListener(e -> { 
-            panelMember.setVisible(false); 
-            panelNonMember.setVisible(true);
+        rbEWallet.addActionListener(e -> { 
+            panelCash.setVisible(false); 
+            panelDigital.setVisible(true);
             txtDiskon.setText("0");
             hitungDiskonDanPajak(); 
         });
@@ -157,9 +162,18 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void groupRadioMember() {
         ButtonGroup bg = new ButtonGroup();
-        bg.add(rbMember); bg.add(rbNonMember);
-        rbMember.addActionListener(e -> { panelMember.setVisible(true); panelNonMember.setVisible(false); });
-        rbNonMember.addActionListener(e -> { panelMember.setVisible(false); panelNonMember.setVisible(true); });
+        bg.add(rbMember); 
+        bg.add(rbNonMember);
+
+        rbMember.addActionListener(e -> { 
+            panelMember.setVisible(true); 
+            panelNonMember.setVisible(false); 
+        });
+
+        rbNonMember.addActionListener(e -> { 
+            panelMember.setVisible(false); 
+            panelNonMember.setVisible(true); 
+        });
     }
 
    private void hitungDiskonDanPajak() {
@@ -950,10 +964,14 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             if (idBaru > 0) {
                 PesananController.updateStatusBayar(t.idPesanan);
 
-                if (t.idMember > 0) {
-
-                    if (t.totalBelanja >= 50000) {
-                        dbHelper.executeQuery("UPDATE member SET points = points + 1 WHERE id_member = " + t.idMember);
+                 if (t.idMember > 0) {
+                    //perbaikan penambahan poin untuk member agar poin bertambah dalam kelipatan 50000
+                    if (t.totalBelanja >= 50000 ) {
+                        int jmlhPoin = 0;
+                        if (t.totalBelanja%50000 == 0){
+                            jmlhPoin = (int) (t.totalBelanja/50000);
+                        }
+                        dbHelper.executeQuery("UPDATE member SET points = points + " + jmlhPoin + " WHERE id_member = " + t.idMember);
                     }
 
                     if (t.diskon > 0) {
