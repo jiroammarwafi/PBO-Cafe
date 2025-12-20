@@ -638,7 +638,7 @@ public class FrmLaporanPenjualan extends javax.swing.JFrame {
             .addGroup(bg_panel1Layout.createSequentialGroup()
                 .addGap(108, 108, 108)
                 .addComponent(bg_panel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(350, Short.MAX_VALUE))
+                .addContainerGap(900, Short.MAX_VALUE))
         );
         bg_panel1Layout.setVerticalGroup(
             bg_panel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
