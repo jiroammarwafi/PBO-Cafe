@@ -3,6 +3,7 @@ package backend;
 import backend.TransaksiBackend.Transaksi;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class TransaksiBackend {
 
@@ -56,7 +57,7 @@ public class TransaksiBackend {
                             : "'" + t.nomor + "'";
 
         // 4. Susun Query (Perhatikan: %s digunakan untuk yang bisa bernilai NULL agar tidak ada tanda kutip manual)
-        String query = String.format(
+        String query = String.format(Locale.US,
             "INSERT INTO transaksi (id_pesanan, id_member, waktu_transaksi, total_belanja, diskon, pajak, total_akhir, metode_pembayaran, nominal_bayar, kembalian, nomor_kartu_ewallet) " +
             "VALUES (%d, %s, %s, %.2f, %.2f, %.2f, %.2f, '%s', %.2f, %.2f, %s)",
             t.idPesanan, 

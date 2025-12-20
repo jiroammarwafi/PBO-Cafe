@@ -2,8 +2,6 @@
 package frontend;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -18,11 +16,11 @@ import java.util.List;
 
 public class FrmPesanan extends JFrame {
 
-    private JTextField txtNama, txtCariMenu, txtIdPesanan;
+    private JTextField txtCariMenu, txtIdPesanan;
     private JComboBox<String> cbMeja;
     private JTable tblMenu, tblCart, tblRiwayat, tblRiwayatDetail;
     private DefaultTableModel modelMenu, modelCart, modelRiwayat, modelRiwayatDetail;
-    private JLabel lblSubtotal, lblMemberStatus;
+    private JLabel lblSubtotal;
     private JButton btnCari, btnSimpan, btnDetail, btnHapus;
     private JButton btnKembali;
     private JButton btnExtra;
@@ -38,24 +36,12 @@ public class FrmPesanan extends JFrame {
         setLayout(null);
 
         // ================= INPUT ATAS =================
-        JLabel lblNama = new JLabel("Nama :");
-        lblNama.setBounds(20, 20, 80, 25);
-        add(lblNama);
-        txtNama = new JTextField();
-        txtNama.setBounds(100, 20, 200, 25);
-        add(txtNama);
-
-        lblMemberStatus = new JLabel("");
-        lblMemberStatus.setBounds(310, 20, 100, 25);
-        lblMemberStatus.setForeground(Color.BLUE);
-        add(lblMemberStatus);
-
-        // Move No Meja input above the List Detail Pesanan table
+        // No customer name input; only No Meja and search
         JLabel lblMeja = new JLabel("No Meja :");
-        lblMeja.setBounds(430, 20, 80, 25);
+        lblMeja.setBounds(20, 20, 80, 25);
         add(lblMeja);
         cbMeja = new JComboBox<>(new String[]{"1", "2", "3", "4", "5"});
-        cbMeja.setBounds(500, 20, 100, 25);
+        cbMeja.setBounds(100, 20, 100, 25);
         add(cbMeja);
 
         JLabel lblCari = new JLabel("Cari Menu :");
@@ -107,7 +93,7 @@ public class FrmPesanan extends JFrame {
         add(btnSimpan);
 
         // ================= TABEL RIWAYAT PESANAN =================
-        modelRiwayat = new DefaultTableModel(new String[]{"ID", "Nama Pelanggan", "No Meja", "Subtotal"}, 0);
+        modelRiwayat = new DefaultTableModel(new String[]{"ID", "No Meja", "Subtotal"}, 0);
         tblRiwayat = new JTable(modelRiwayat);
         JScrollPane historyPane = new JScrollPane(tblRiwayat);
         historyPane.setBounds(20, 360, 840, 200);
@@ -162,7 +148,7 @@ public class FrmPesanan extends JFrame {
         add(btnKembali);
         btnKembali.setVisible(false); // Sembunyikan saat awal
 
-        // **Tambahkan ActionListener untuk Tombol Kembali**
+        // *Tambahkan ActionListener untuk Tombol Kembali*
         btnKembali.addActionListener(e -> {
             historyPane.setVisible(true); // Tampilkan Riwayat Utama
             historyDetilPane.setVisible(false); // Sembunyikan Riwayat Detail
@@ -224,55 +210,14 @@ public class FrmPesanan extends JFrame {
         loadMenu();
         loadDataPesanan();
 
-        // Add DocumentListener to txtNama for member check
-        txtNama.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                checkMemberStatus();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                checkMemberStatus();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                checkMemberStatus();
-            }
-        });
+        // No customer name input anymore; skip member checks
 
         setVisible(true);
 
         
     }
 
-    // check if entered name is a registered member
-    private void checkMemberStatus() {
-        String nama = txtNama.getText().trim();
-        if (nama.isEmpty()) {
-            lblMemberStatus.setText("");
-            return;
-        }
-
-        String sql = "SELECT COUNT(*) as count FROM member WHERE nama_member = '" + nama.replace("'", "''") + "'";
-        ResultSet rs = null;
-        try {
-            rs = dbHelper.selectQuery(sql);
-            if (rs != null && rs.next()) {
-                int count = rs.getInt("count");
-                if (count > 0) {
-                    lblMemberStatus.setText("member");
-                } else {
-                    lblMemberStatus.setText("");
-                }
-            }
-            if (rs != null) rs.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            lblMemberStatus.setText("");
-        }
-    }
+    // Customer name input removed; member checks removed
 
     // immediate update (called by Timer)
     private void updateCartImmediate() {
@@ -298,10 +243,6 @@ public class FrmPesanan extends JFrame {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    public String getNama(){
-        return txtNama.getText().trim();
     }
 
     private void loadMenu() {
@@ -380,13 +321,9 @@ public class FrmPesanan extends JFrame {
 
     private void doSaveOrderInBackground() {
         // Validate quick
-        String nama = txtNama.getText().trim();
+        String nama = "Tamu"; // default name since input removed
         // pastikan cart ter-update sebelum validasi (hindari race dengan debounce)
         updateCart();
-        if (nama.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Nama pelanggan belum diisi!");
-            return;
-        }
         if (modelCart.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Keranjang masih kosong!");
             return;
@@ -494,7 +431,6 @@ public class FrmPesanan extends JFrame {
                     JOptionPane.showMessageDialog(FrmPesanan.this, "Pesanan berhasil disimpan! ID: " + generatedId);
                     // refresh history & reset
                     loadDataPesanan();
-                    txtNama.setText("");
                     modelCart.setRowCount(0);
                     // reset qty in menu
                     for (int r = 0; r < modelMenu.getRowCount(); r++) modelMenu.setValueAt(0, r, 2);
@@ -522,7 +458,6 @@ public class FrmPesanan extends JFrame {
             while (rs != null && rs.next()) {
                 modelRiwayat.addRow(new Object[]{
                         rs.getInt("id_pesanan"),
-                        rs.getString("nama_pelanggan"),
                         rs.getInt("no_meja"),
                         rs.getInt("subtotal")
                 });
@@ -533,8 +468,8 @@ public class FrmPesanan extends JFrame {
         }
     }
     private void btnBayarActionPerformed(java.awt.event.ActionEvent evt) {
-    String nama = txtNama.getText().trim();
-    
+    String nama = "Tamu";
+
     // Membuka form transaksi sambil mengirim nama
     FrmTransaksiPembayaran frm = new FrmTransaksiPembayaran(nama);
     frm.setVisible(true);

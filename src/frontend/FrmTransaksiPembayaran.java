@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 /**
  *
@@ -30,6 +32,23 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         cmbNomorMeja.addActionListener(e -> {
             ambilTotalBelanjaMeja();
         });
+        
+        // Tambah listener untuk menghitung kembalian real-time
+        txtNominalBayar.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                hitungKembalian();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                hitungKembalian();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                hitungKembalian();
+            }
+        });
+        
         resetForm();
         isiComboNomorOrder();
         groupRadioCash();
@@ -40,12 +59,8 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtService.setEditable(false);
     }
 
-    // Di dalam FrmTransaksiPembayaran.java
     public FrmTransaksiPembayaran(String namaDariPesanan) {
         initComponents();
-        
-        txtNama.setText(namaDariPesanan);
-        txtNamaNonMember.setText(namaDariPesanan);
 
         tentukanPanelMember(namaDariPesanan);
 
@@ -164,7 +179,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                     int poin = rs.getInt("points");
 
                     if (poin >= 10) {
-                        diskon = totalBelanja * 0.10;
+                        diskon = totalBelanja * 0.5;
                     }
                 }
             }
@@ -178,6 +193,32 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             
         } catch (Exception e) {
             System.out.println("Gagal menghitung: " + e.getMessage());
+        }
+    }
+    
+    private void hitungKembalian() {
+        try {
+            String nominalBayarText = txtNominalBayar.getText().trim();
+            String totalAkhirText = txtTotalAkhir.getText().trim();
+            
+            if (nominalBayarText.isEmpty() || totalAkhirText.isEmpty()) {
+                txtKembalian.setText("0");
+                return;
+            }
+            
+            double nominalBayar = Double.parseDouble(nominalBayarText.replace(",", "."));
+            double totalAkhir = Double.parseDouble(totalAkhirText.replace(",", "."));
+            
+            double kembalian = nominalBayar - totalAkhir;
+            
+            // Tampilkan kembalian, jika negatif tampilkan 0
+            if (kembalian < 0) {
+                txtKembalian.setText("0");
+            } else {
+                txtKembalian.setText(String.format("%.0f", kembalian));
+            }
+        } catch (NumberFormatException e) {
+            txtKembalian.setText("0");
         }
     }
         
