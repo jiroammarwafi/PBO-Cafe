@@ -231,17 +231,30 @@ public class KategoriMenuApp extends JFrame {
             JOptionPane.showMessageDialog(this, "Pilih data yang ingin dihapus", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
+
+        // Ambil kategori dari backend
+        Kategori kat = new Kategori().getById(id);
+        if (kat.getIdkategori() == 0) {
+            JOptionPane.showMessageDialog(this, "Data kategori dengan ID tersebut tidak ditemukan", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Cek apakah kategori sedang dipakai oleh menu
+        // perubahan apabila kategori sedang dipakai oleh menu
+        int usage = kat.getUsageCount();
+        if (usage > 0) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Kategori ini tidak dapat dihapus karena sedang dipakai oleh " + usage + " menu.",
+                "Peringatan",
+                JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
 
         int konfirmasi = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data ini?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
         if (konfirmasi == JOptionPane.YES_OPTION) {
-            int id = Integer.parseInt(tableModel.getValueAt(selectedRow, 0).toString());
-
-            Kategori kat = new Kategori().getById(id);
-            if (kat.getIdkategori() == 0) {
-                JOptionPane.showMessageDialog(this, "Data kategori dengan ID tersebut tidak ditemukan", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
             kat.delete();
 
             loadDataFromBackend();

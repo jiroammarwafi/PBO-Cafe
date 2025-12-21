@@ -35,6 +35,23 @@ public class Kategori {
         this.nama = nama;
     }
 
+    // Mengecek berapa banyak menu yang menggunakan kategori ini
+    // Digunakan untuk validasi sebelum hapus kategori
+    public int getUsageCount() {
+        int count = 0;
+        ResultSet rs = dbHelper.selectQuery(
+                "SELECT COUNT(*) AS cnt FROM menu WHERE id_kategori = '" + this.idkategori + "'"
+        );
+        try {
+            if (rs != null && rs.next()) {
+                count = rs.getInt("cnt");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
     // Ambil 1 kategori berdasarkan id
     public Kategori getById(int id) {
         Kategori kat = new Kategori();
