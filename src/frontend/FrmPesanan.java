@@ -11,8 +11,6 @@ import backend.dbHelper;
 import java.awt.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FrmPesanan extends JFrame {
 
@@ -25,7 +23,6 @@ public class FrmPesanan extends JFrame {
     private JButton btnKembali;
     private JButton btnExtra;
 
-    // Debounce timer to prevent too frequent cart updates
     private Timer cartUpdateTimer;
 
     public FrmPesanan() {
@@ -35,8 +32,6 @@ public class FrmPesanan extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
 
-        // ================= INPUT ATAS =================
-        // No customer name input; only No Meja and search
         JLabel lblMeja = new JLabel("No Meja :");
         lblMeja.setBounds(20, 20, 80, 25);
         add(lblMeja);
@@ -54,16 +49,14 @@ public class FrmPesanan extends JFrame {
         btnCari.setBounds(310, 60, 70, 25);
         add(btnCari);
 
-        // ================= TABEL MENU =================
         modelMenu = new DefaultTableModel(new Object[]{"Nama", "Harga", "Qty"}, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                return col == 2; // only Qty editable
+                return col == 2;
             }
 
             @Override
             public void setValueAt(Object aValue, int row, int column) {
-                // store value and let listener handle changes via debounce
                 super.setValueAt(aValue, row, column);
             }
         };
@@ -74,12 +67,10 @@ public class FrmPesanan extends JFrame {
         menuPane.setBorder(BorderFactory.createTitledBorder("Daftar Menu : (edit QTY)"));
         add(menuPane);
 
-        // subtotal label (single instance)
         lblSubtotal = new JLabel("Subtotal : Rp 0");
         lblSubtotal.setBounds(430, 320, 300, 25);
         add(lblSubtotal);
 
-        // ================= TABEL CART =================
         modelCart = new DefaultTableModel(new String[]{"Nama Menu", "Qty", "Total"}, 0);
         tblCart = new JTable(modelCart);
         JScrollPane cartPane = new JScrollPane(tblCart);
@@ -87,12 +78,10 @@ public class FrmPesanan extends JFrame {
         cartPane.setBorder(BorderFactory.createTitledBorder("List Detail Pesanan"));
         add(cartPane);
 
-        // ================= Tombol Simpan =================
         btnSimpan = new JButton("Simpan");
         btnSimpan.setBounds(760, 320, 100, 25);
         add(btnSimpan);
 
-        // ================= TABEL RIWAYAT PESANAN =================
         modelRiwayat = new DefaultTableModel(new String[]{"ID", "No Meja", "Subtotal"}, 0);
         tblRiwayat = new JTable(modelRiwayat);
         JScrollPane historyPane = new JScrollPane(tblRiwayat);
@@ -100,16 +89,14 @@ public class FrmPesanan extends JFrame {
         historyPane.setBorder(BorderFactory.createTitledBorder("List Riwayat Pesanan"));
         add(historyPane);
 
-        // ================= TABEL RIWAYAT DETAIL PESANAN ================= (dipindahkan)
         modelRiwayatDetail = new DefaultTableModel(new String[]{"ID Pesanan", "Nama Menu", "Harga","Qty", "Subtotal"}, 0);
         tblRiwayatDetail = new JTable(modelRiwayatDetail);
         JScrollPane historyDetilPane = new JScrollPane(tblRiwayatDetail);
-        historyDetilPane.setBounds(20, 360, 840, 200); // Posisi sama dengan historyPane
+        historyDetilPane.setBounds(20, 360, 840, 200);
         historyDetilPane.setBorder(BorderFactory.createTitledBorder("List Riwayat Detail Pesanan"));
         add(historyDetilPane);
-        historyDetilPane.setVisible(false); // <--- INI PENTING: Sembunyikan secara default 
+        historyDetilPane.setVisible(false);
 
-        // ================= DETAIL & HAPUS =================
         JLabel lblId = new JLabel("Masukkan ID :");
         lblId.setBounds(20, 570, 100, 25);
         add(lblId);
@@ -121,7 +108,7 @@ public class FrmPesanan extends JFrame {
         btnDetail = new JButton("Lihat Detail Pesanan");
         btnDetail.setBounds(260, 570, 160, 25);
         add(btnDetail);
-        btnDetail.addActionListener(e -> { 
+        btnDetail.addActionListener(e -> {
             String id = txtIdPesanan.getText();
 
             if (id.isEmpty()) {
@@ -129,33 +116,30 @@ public class FrmPesanan extends JFrame {
                 return;
             }
 
-            // 1. Update data detail
             updateTableRiwayatDetail(Integer.parseInt(id));
-            
-            // 2. Kontrol Visibilitas
+
             historyPane.setVisible(false);
-            historyDetilPane.setVisible(true); // Tampilkan Detail
+            historyDetilPane.setVisible(true);
             btnDetail.setVisible(false);
             btnHapus.setVisible(false);
-            btnKembali.setVisible(true); // Tampilkan tombol Kembali
-        }); // Jangan ada kurung tutup atau semicolon ekstra di sini
+            btnKembali.setVisible(true);
+        });
 
         btnHapus = new JButton("Hapus Data");
         btnHapus.setBounds(430, 570, 120, 25);
 
-        btnKembali = new JButton("Kembali ke Riwayat"); // <-- DEKLARASI TOMBOL BARU
+        btnKembali = new JButton("Kembali ke Riwayat");
         btnKembali.setBounds(560, 570, 180, 25);
         add(btnKembali);
-        btnKembali.setVisible(false); // Sembunyikan saat awal
+        btnKembali.setVisible(false);
 
-        // *Tambahkan ActionListener untuk Tombol Kembali*
         btnKembali.addActionListener(e -> {
-            historyPane.setVisible(true); // Tampilkan Riwayat Utama
-            historyDetilPane.setVisible(false); // Sembunyikan Riwayat Detail
+            historyPane.setVisible(true);
+            historyDetilPane.setVisible(false);
             btnDetail.setVisible(true);
             btnHapus.setVisible(true);
-            btnKembali.setVisible(false); // Sembunyikan tombol Kembali
-            modelRiwayatDetail.setRowCount(0); // Optional: Kosongkan data detail
+            btnKembali.setVisible(false);
+            modelRiwayatDetail.setRowCount(0);
         });
         add(btnHapus);
         btnHapus.addActionListener(e -> {
@@ -174,7 +158,9 @@ public class FrmPesanan extends JFrame {
                 return;
             }
 
-            // Cek apakah pesanan sudah diproses (sudah dibayar / punya transaksi)
+            // Fitur: peringatan - tidak bisa dihapus jika pesanan sudah diproses (sudah dibayar). 
+            // Cara kerja: memanggil TransaksiBackend.PesananController.isPesananProcessed(id); 
+            // jika true tampilkan dialog dan batalkan penghapusan, jika false lanjutkan hapus.
             boolean processed = backend.TransaksiBackend.PesananController.isPesananProcessed(idInt);
             if (processed) {
                 JOptionPane.showMessageDialog(this, "Pesanan sudah diproses di form transaksi, tidak dapat dihapus.");
@@ -189,10 +175,9 @@ public class FrmPesanan extends JFrame {
 
             JOptionPane.showMessageDialog(this, "Pesanan berhasil dihapus!");
 
-            loadDataPesanan(); // Refresh tabel bawah
+            loadDataPesanan();
         });
 
-        // ================= TOMBOL EXTRA (sudut bawah kiri) =================
         btnExtra = new JButton("Bayar");
         btnExtra.setBounds(760, 570, 100, 25);
         add(btnExtra);
@@ -200,46 +185,33 @@ public class FrmPesanan extends JFrame {
             btnBayarActionPerformed(e);
         });
 
-        // ================= Debounce Timer =================
         cartUpdateTimer = new Timer(300, ev -> updateCartImmediate());
         cartUpdateTimer.setRepeats(false);
 
-        // Table model listener: start debounce when Qty changed
         modelMenu.addTableModelListener(new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
                 if (e.getType() == TableModelEvent.UPDATE) {
                     if (e.getColumn() == 2 || e.getColumn() == TableModelEvent.ALL_COLUMNS) {
-                        // schedule the update (debounced)
                         cartUpdateTimer.restart();
                     }
                 }
             }
         });
 
-        // ================= Button Actions =================
         btnCari.addActionListener(e -> doSearchMenu());
         btnSimpan.addActionListener(e -> doSaveOrderInBackground());
 
-        // initial load
         loadMenu();
         loadDataPesanan();
 
-        // No customer name input anymore; skip member checks
-
         setVisible(true);
-
-        
     }
 
-    // Customer name input removed; member checks removed
-
-    // immediate update (called by Timer)
     private void updateCartImmediate() {
         SwingUtilities.invokeLater(() -> updateCart());
     }
 
-    // search menu (safe-ish: escape single quotes)
     private void doSearchMenu() {
         modelMenu.setRowCount(0);
         String keyword = txtCariMenu.getText().trim().replace("'", "''");
@@ -280,7 +252,6 @@ public class FrmPesanan extends JFrame {
     }
 
     private void updateCart() {
-        // build cart from modelMenu (only rows with qty > 0)
         modelCart.setRowCount(0);
         long subtotal = 0L;
 
@@ -290,7 +261,6 @@ public class FrmPesanan extends JFrame {
             try {
                 qty = Integer.parseInt(qtyObj.toString());
             } catch (Exception ex) {
-                // ignore invalid qty
                 continue;
             }
             if (qty > 0) {
@@ -308,14 +278,14 @@ public class FrmPesanan extends JFrame {
         }
         lblSubtotal.setText("Subtotal : Rp " + String.format("%,d", subtotal).replace(',', '.'));
     }
+
     private void updateTableRiwayatDetail(int idPesanan) {
-        // build cart from modelMenu (only rows with qty > 0)
         modelRiwayatDetail.setRowCount(0);
-        String sql = "SELECT dp.id_pesanan, b.nama_menu, dp.qty, dp.harga, dp.subtotal\n" + 
-                    "FROM pesanan_detail dp\n" + 
-                    "INNER JOIN menu b\n" + 
-                    "ON dp.id_menu = b.id_menu\n" + 
-                    "WHERE dp.id_pesanan = " + idPesanan;
+        String sql = "SELECT dp.id_pesanan, b.nama_menu, dp.qty, dp.harga, dp.subtotal\n" +
+                "FROM pesanan_detail dp\n" +
+                "INNER JOIN menu b\n" +
+                "ON dp.id_menu = b.id_menu\n" +
+                "WHERE dp.id_pesanan = " + idPesanan;
         ResultSet rs = null;
         try {
             rs = dbHelper.selectQuery(sql);
@@ -335,57 +305,44 @@ public class FrmPesanan extends JFrame {
     }
 
     private void doSaveOrderInBackground() {
-        // Validate quick
-        String nama = "Tamu"; // default name since input removed
-        // pastikan cart ter-update sebelum validasi (hindari race dengan debounce)
+        String nama = "Tamu";
         updateCart();
         if (modelCart.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Keranjang masih kosong!");
             return;
         }
 
-        // disable UI elements
         btnSimpan.setEnabled(false);
         btnCari.setEnabled(false);
         txtCariMenu.setEnabled(false);
         tblMenu.setVisible(false);
         tblCart.setVisible(false);
-        
-        // Create SwingWorker to do DB work off the EDT
+
         SwingWorker<Boolean, Void> worker = new SwingWorker<>() {
             private int generatedId = -1;
             private String errorMsg = null;
 
             @Override
-            protected Boolean doInBackground() {                    
+            protected Boolean doInBackground() {
                 try {
-                    String noMeja = cbMeja.getSelectedItem().toString();    
+                    String noMeja = cbMeja.getSelectedItem().toString();
                     String escNama = nama.replace("'", "''");
-                    
-                    // Variabel untuk menyimpan total subtotal
-                    int subtotal = 0; 
-                    
-                    // =========================================================
-                    // LANGKAH 1: INSERT HEADER PESANAN (TANPA SUBTOTAL)
-                    // Catatan: Subtotal akan di-UPDATE di Langkah 3
-                    // =========================================================
+
+                    int subtotal = 0;
+
                     String sqlPesanan = "INSERT INTO pesanan (no_meja, nama_pelanggan, waktu_pesan) " +
-                            "VALUES (" + noMeja + ", '" + escNama + "', NOW());"; // Hapus koma berlebih
+                            "VALUES (" + noMeja + ", '" + escNama + "', NOW());";
 
                     generatedId = dbHelper.insertQueryGetId(sqlPesanan);
                     if (generatedId <= 0) {
                         errorMsg = "Gagal mendapatkan ID pesanan dari DB. (Pastikan tabel 'pesanan' memiliki auto-increment ID)";
                         return false;
                     }
-                    
-                    // =========================================================
-                    // LANGKAH 2: LOOP DETAIL DAN INSERT KE pesanan_detail
-                    // =========================================================
+
                     for (int i = 0; i < modelCart.getRowCount(); i++) {
                         String namaMenu = modelCart.getValueAt(i, 0).toString().replace("'", "''");
                         int qty = Integer.parseInt(modelCart.getValueAt(i, 1).toString());
 
-                        // ambil id_menu & harga dari tabel menu
                         String sel = "SELECT id_menu, harga FROM menu WHERE nama_menu = '" + namaMenu + "' LIMIT 1";
                         ResultSet rs = dbHelper.selectQuery(sel);
                         int idMenu = 0;
@@ -401,14 +358,12 @@ public class FrmPesanan extends JFrame {
                             continue;
                         }
 
-                        subtotal += (harga * qty); // Akumulasi subtotal
+                        subtotal += (harga * qty);
 
-                        // REVISI SQL DETAIL: Pastikan format string benar dan tanpa koma/spasi berlebih
                         String sqlDetail = String.format(
-                            "INSERT INTO pesanan_detail (id_pesanan, id_menu, qty, harga) VALUES (%d, %d, %d, %d);",
-                            generatedId, idMenu, qty, harga);
-                            
-                        // Ganti insertQueryGetId -> executeQuery untuk INSERT detail
+                                "INSERT INTO pesanan_detail (id_pesanan, id_menu, qty, harga) VALUES (%d, %d, %d, %d);",
+                                generatedId, idMenu, qty, harga);
+
                         int okDetail = dbHelper.insertQueryGetId(sqlDetail);
                         if (okDetail <= 0) {
                             errorMsg = "Gagal menyimpan detail pesanan. SQL: " + sqlDetail;
@@ -418,13 +373,14 @@ public class FrmPesanan extends JFrame {
                     }
 
                     return true;
-                    
+
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     errorMsg = ex.getMessage();
                     return false;
                 }
             }
+
             @Override
             protected void done() {
                 boolean success = false;
@@ -435,7 +391,6 @@ public class FrmPesanan extends JFrame {
                     success = false;
                 }
 
-                // re-enable UI and refresh
                 btnSimpan.setEnabled(true);
                 btnCari.setEnabled(true);
                 txtCariMenu.setEnabled(true);
@@ -444,10 +399,8 @@ public class FrmPesanan extends JFrame {
 
                 if (success) {
                     JOptionPane.showMessageDialog(FrmPesanan.this, "Pesanan berhasil disimpan! ID: " + generatedId);
-                    // refresh history & reset
                     loadDataPesanan();
                     modelCart.setRowCount(0);
-                    // reset qty in menu
                     for (int r = 0; r < modelMenu.getRowCount(); r++) modelMenu.setValueAt(0, r, 2);
                     lblSubtotal.setText("Subtotal : Rp 0");
                 } else {
@@ -463,9 +416,9 @@ public class FrmPesanan extends JFrame {
         modelRiwayat.setRowCount(0);
 
         String sql = "SELECT p.id_pesanan, p.nama_pelanggan, p.no_meja, COALESCE(SUM(pd.subtotal), 0) as subtotal " +
-                     "FROM pesanan p LEFT JOIN pesanan_detail pd ON p.id_pesanan = pd.id_pesanan " +
-                     "GROUP BY p.id_pesanan, p.nama_pelanggan, p.no_meja " +
-                     "ORDER BY p.id_pesanan DESC";
+                "FROM pesanan p LEFT JOIN pesanan_detail pd ON p.id_pesanan = pd.id_pesanan " +
+                "GROUP BY p.id_pesanan, p.nama_pelanggan, p.no_meja " +
+                "ORDER BY p.id_pesanan DESC";
 
         ResultSet rs = dbHelper.selectQuery(sql);
 
@@ -482,20 +435,17 @@ public class FrmPesanan extends JFrame {
             ex.printStackTrace();
         }
     }
+
     private void btnBayarActionPerformed(java.awt.event.ActionEvent evt) {
-    String nama = "Tamu";
+        String nama = "Tamu";
 
-    // Membuka form transaksi sambil mengirim nama
-    FrmTransaksiPembayaran frm = new FrmTransaksiPembayaran(nama);
-    frm.setVisible(true);
-    
-    // Opsional: tutup form pesanan
-    this.dispose(); 
-}
+        FrmTransaksiPembayaran frm = new FrmTransaksiPembayaran(nama);
+        frm.setVisible(true);
 
+        this.dispose();
+    }
 
     public static void main(String[] args) {
-        // run on EDT
         SwingUtilities.invokeLater(() -> new FrmPesanan());
     }
 }
