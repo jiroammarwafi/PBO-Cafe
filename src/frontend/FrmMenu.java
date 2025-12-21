@@ -207,9 +207,7 @@ public class FrmMenu extends JFrame {
     }
 
     private void refreshData() {
-        // Refresh kategori dropdown agar selalu sinkron dengan database
-        loadKategori();
-        
+        loadKategori(); // Refresh kategori dari database
         tableModel.setRowCount(0);
         List<Menu> menuList = Menu.getAllMenu();
         for (Menu menu : menuList) {
