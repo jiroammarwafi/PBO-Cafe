@@ -33,7 +33,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             ambilTotalBelanjaMeja();
         });
         
-        // Tambah listener untuk menghitung kembalian real-time
         txtNominalBayar.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -53,10 +52,14 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         isiComboNomorOrder();
         groupRadioCash();
         groupRadioMember();
-        panelMember.setVisible(false);
-        panelDigital.setVisible(false);
         txtDiskon.setEditable(false);
         txtService.setEditable(false);
+
+        //Perbaikan action radio button dan panel member serta metode pembayaran
+        rbCash.setSelected(true);
+        rbMember.setSelected(true);
+        panelNonMember.setVisible(false);
+        panelDigital.setVisible(false);
     }
 
     public FrmTransaksiPembayaran(String namaDariPesanan) {
@@ -83,7 +86,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtNama.setText("");
         btnSimpan.setEnabled(false); 
         txtDiskon.setEditable(false);
-        txtService.setEditable(false);// Tombol simpan terkunci sampai "Proses" diklik
+        txtService.setEditable(false);
     }
 
     private void isiComboNomorOrder() {
@@ -99,10 +102,8 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 cmbNomorMeja.addItem(String.valueOf(p.getNoMeja()));
             }
             
-            // Pilih meja paling atas
             cmbNomorMeja.setSelectedIndex(0);
-            
-            // Panggil fungsi secara manual satu kali untuk inisialisasi total belanja
+
             ambilTotalBelanjaMeja();
         }
     }
@@ -119,8 +120,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                     if (p.getNoMeja() == noMeja) {
                         double total = PesananController.getTotalBelanja(p.getIdOrder());
                         txtTotalBelanja.setText(String.format("%.0f", total));
-                        
-                        // Update perhitungan pajak dan diskon otomatis
+
                         hitungDiskonDanPajak();
                         break;
                     }
@@ -136,20 +136,21 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         txtTanggal.setText(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
     }
 
+    //perbaikan radio button
     private void groupRadioCash() {
         ButtonGroup bg = new ButtonGroup();
-        bg.add(rbMember); 
-        bg.add(rbNonMember);
+        bg.add(rbCash); 
+        bg.add(rbEWallet);
         
-        rbMember.addActionListener(e -> { 
-            panelMember.setVisible(true); 
-            panelNonMember.setVisible(false);
+        rbCash.addActionListener(e -> { 
+            panelCash.setVisible(true); 
+            panelDigital.setVisible(false);
             hitungDiskonDanPajak();
         });
         
-        rbNonMember.addActionListener(e -> { 
-            panelMember.setVisible(false); 
-            panelNonMember.setVisible(true);
+        rbEWallet.addActionListener(e -> { 
+            panelCash.setVisible(false); 
+            panelDigital.setVisible(true);
             txtDiskon.setText("0");
             hitungDiskonDanPajak(); 
         });
@@ -157,9 +158,18 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
     private void groupRadioMember() {
         ButtonGroup bg = new ButtonGroup();
-        bg.add(rbMember); bg.add(rbNonMember);
-        rbMember.addActionListener(e -> { panelMember.setVisible(true); panelNonMember.setVisible(false); });
-        rbNonMember.addActionListener(e -> { panelMember.setVisible(false); panelNonMember.setVisible(true); });
+        bg.add(rbMember); 
+        bg.add(rbNonMember);
+
+        rbMember.addActionListener(e -> { 
+            panelMember.setVisible(true); 
+            panelNonMember.setVisible(false); 
+        });
+
+        rbNonMember.addActionListener(e -> { 
+            panelMember.setVisible(false); 
+            panelNonMember.setVisible(true); 
+        });
     }
 
    private void hitungDiskonDanPajak() {
@@ -170,8 +180,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
             if (rbMember.isSelected() && !txtIdMember.getText().equals("0")) {
                 int idMem = Integer.parseInt(txtIdMember.getText());
-                
-                // Ambil poin dari database
+
                 String queryPoin = "SELECT points FROM member WHERE id_member = " + idMem;
                 ResultSet rs = dbHelper.selectQuery(queryPoin);
                 
@@ -186,7 +195,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
             double totalAkhir = totalBelanja + pajak - diskon;
 
-            // Tampilkan ke masing-masing field
             txtService.setText(String.format("%.0f", pajak));
             txtDiskon.setText(String.format("%.0f", diskon)); 
             txtTotalAkhir.setText(String.format("%.0f", totalAkhir));
@@ -210,8 +218,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             double totalAkhir = Double.parseDouble(totalAkhirText.replace(",", "."));
             
             double kembalian = nominalBayar - totalAkhir;
-            
-            // Tampilkan kembalian, jika negatif tampilkan 0
+
             if (kembalian < 0) {
                 txtKembalian.setText("0");
             } else {
@@ -231,22 +238,19 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         }
 
         try {
-            // Ambil ID dan POIN dari database
             String sql = "SELECT id_member, points FROM member WHERE nama_member ILIKE '" + nama.replace("'", "''") + "'";
             ResultSet rs = dbHelper.selectQuery(sql);
 
             if (rs != null && rs.next()) {
                 int id = rs.getInt("id_member");
-                int poin = rs.getInt("points"); // Ambil poin member
+                int poin = rs.getInt("points"); 
                 
                 txtIdMember.setText(String.valueOf(id));
                 rbMember.setSelected(true);
                 panelMember.setVisible(true);
                 panelNonMember.setVisible(false);
-                
-                // Simpan informasi poin sementara di label (opsional) atau gunakan logika langsung
+
                 if (poin >= 10) {
-                    // Memberikan tanda bahwa mereka punya reward diskon
                     txtDiskon.setToolTipText("Member memiliki " + poin + " poin. Diskon 10% aktif.");
                 }
             } else {
@@ -256,7 +260,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 txtIdMember.setText("0");
             }
             
-            hitungDiskonDanPajak(); // Hitung ulang setelah status member dipastikan
+            hitungDiskonDanPajak();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -869,11 +873,10 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
 
             double totalAkhir = Double.parseDouble(txtTotalAkhir.getText().replace(",", "."));
             
-            // 3. Validasi khusus jika metode pembayaran adalah CASH
             if (rbCash.isSelected()) {
                 if (txtNominalBayar.getText().trim().isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Silakan isi Nominal Bayar dulu!");
-                    btnSimpan.setEnabled(false); // Pastikan tetap mati
+                    btnSimpan.setEnabled(false); 
                     return;
                 }
                 
@@ -881,11 +884,10 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                 
                 if (bayar < totalAkhir) {
                     JOptionPane.showMessageDialog(this, "Uang Kurang! Tidak bisa memproses simpan.");
-                    btnSimpan.setEnabled(false); // Tetap matikan jika uang kurang
+                    btnSimpan.setEnabled(false);
                     return;
                 }
-                
-                // Hitung Kembalian
+
                 double kembalian = bayar - totalAkhir;
                 txtKembalian.setText(String.format("%.0f", kembalian));
             }  else if (rbEWallet.isSelected()) {
@@ -897,8 +899,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             }
 
             btnSimpan.setEnabled(true);
-            
-            // Beri tanda visual agar user tahu
+
             btnSimpan.requestFocus(); 
             JOptionPane.showMessageDialog(this, "Perhitungan Selesai. Silakan klik SIMPAN.");
 
@@ -909,21 +910,17 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
     }//GEN-LAST:event_btnProsesActionPerformed
 
    private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {
-        // 1. Matikan tombol segera agar tidak diklik dua kali
         btnSimpan.setEnabled(false);
 
         try {
             Transaksi t = new Transaksi();
-            
-            // --- SET DATA TRANSAKSI ---
-            // Penanganan Waktu
+
             if (txtTanggal.getText().isEmpty() || txtTanggal.getText().equals("null")) {
                 t.waktu = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             } else {
                 t.waktu = txtTanggal.getText();
             }
 
-            // Ambil ID Pesanan dari Meja yang dipilih
             int noMeja = Integer.parseInt(cmbNomorMeja.getSelectedItem().toString());
             ArrayList<TransaksiBackend.Pesanan> list = PesananController.getNomorMejaTerakhir();
             for(TransaksiBackend.Pesanan p : list) {
@@ -932,8 +929,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                     break;
                 }
             }
-            
-            // Set data lainnya dari TextField
+ 
             t.idMember = Integer.parseInt(txtIdMember.getText());
             t.totalBelanja = Double.parseDouble(txtTotalBelanja.getText());
             t.diskon = Double.parseDouble(txtDiskon.getText());
@@ -944,16 +940,19 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
             t.metode = rbCash.isSelected() ? "Cash" : (rbEWallet.isSelected() ? "E-WALLET" : "DEBIT");
             t.nomor = txtNomor.getText();
 
-            // 2. PROSES SIMPAN (HANYA DIPANGGIL 1 KALI)
             int idBaru = TransaksiController.insert(t);
 
             if (idBaru > 0) {
                 PesananController.updateStatusBayar(t.idPesanan);
 
-                if (t.idMember > 0) {
-
-                    if (t.totalBelanja >= 50000) {
-                        dbHelper.executeQuery("UPDATE member SET points = points + 1 WHERE id_member = " + t.idMember);
+                 if (t.idMember > 0) {
+                    //Perbaikan update poin dengan kelipatan 50000 bukan tiap transaksi
+                    if (t.totalBelanja >= 50000 ) {
+                        int jmlhPoin = 0;
+                        if (t.totalBelanja%50000 == 0){
+                            jmlhPoin = (int) (t.totalBelanja/50000);
+                        }
+                        dbHelper.executeQuery("UPDATE member SET points = points + " + jmlhPoin + " WHERE id_member = " + t.idMember);
                     }
 
                     if (t.diskon > 0) {
@@ -961,7 +960,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                     }
                 }
 
-                // 4. BUAT NOTA
                 String nota = "----------------CAFE----------------\n"
                             + "---------STRUK PEMBAYARAN---------\n"
                             + "----------------------------------\n"
@@ -989,7 +987,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
                     + "     Terima kasih!\n";
 
                 JOptionPane.showMessageDialog(this, "Transaksi Berhasil!");
-                JOptionPane.showMessageDialog(this, nota); // Tampilkan struk
+                JOptionPane.showMessageDialog(this, nota);
 
                 resetForm();
                 isiComboNomorOrder(); 
@@ -1025,7 +1023,7 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         int id = MemberController.getIdMemberByNama(nama);
         if (id > 0) {
             txtIdMember.setText(String.valueOf(id));
-            hitungDiskonDanPajak(); // Langsung hitung diskon setelah ID ditemukan
+            hitungDiskonDanPajak(); 
             JOptionPane.showMessageDialog(this, "Member ditemukan!");
         } else {
             txtIdMember.setText("0");
@@ -1044,7 +1042,6 @@ public class FrmTransaksiPembayaran extends javax.swing.JFrame {
         }
 
         try {
-            // Cari ID dan Poin berdasarkan nama yang diketik
             String sql = "SELECT id_member, points FROM member WHERE nama_member ILIKE '" + namaCari.replace("'", "''") + "%'";
             ResultSet rs = dbHelper.selectQuery(sql);
 
